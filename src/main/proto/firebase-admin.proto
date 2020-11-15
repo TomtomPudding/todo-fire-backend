@@ -1,0 +1,38 @@
+syntax = "proto3";
+package grpc.firebase.admin;
+option java_package = "com.grpc.api";
+
+service FirebaseAdminService {
+    // サーバーからクライアントにレスポンスを送り続ける
+    rpc Login(LoginRequest) returns (stream LoginResponse);
+    rpc RegisterUser(UserRequest) returns (UserResponse);
+    rpc UpdateUser(UserRequest) returns (UserResponse);
+}
+
+// message
+message LoginRequest {
+    string uid = 1;
+    string email = 2;
+}
+
+message LoginResponse {
+    // reserved 5, 9 to 11;
+    // reserved "image";
+    string uid = 1;
+    string email = 2;
+    string userName = 3;
+    string token = 4;
+}
+
+message UserRequest {
+    string userName = 1;
+    string email = 2;
+}
+
+message UserResponse {
+    // reserved 5, 9 to 11;
+    // reserved "image";
+    string uid = 1;
+    string email = 2;
+    string userName = 3;
+}
