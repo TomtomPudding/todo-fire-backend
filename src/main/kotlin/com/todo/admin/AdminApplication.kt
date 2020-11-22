@@ -1,11 +1,13 @@
-package com.example.demo
+package com.todo.admin
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import java.awt.SystemTray
+import kotlin.system.exitProcess
 
 @SpringBootApplication
-class ToDoApplication
+class AdminApplication
 
 fun main(args: Array<String>) {
-    runApplication<ToDoApplication>(*args)
+	runApplication<AdminApplication>(*args)
 }

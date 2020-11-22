@@ -2,10 +2,12 @@ buildscript {
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+        // 全ファイルに open つける
+        classpath("org.jetbrains.kotlin:kotlin-allopen:${kotlinVersion}")
         classpath("com.google.protobuf:protobuf-gradle-plugin:${protobufVersion}")
     }
     repositories {
-        jcenter()
+        mavenCentral()
     }
 }
 
@@ -33,6 +35,7 @@ detekt {
 tasks.detekt.jvmTarget = "1.8"
 
 apply plugin: "kotlin"
+apply plugin: "kotlin-spring"
 
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
@@ -41,33 +44,35 @@ apply plugin: 'kotlin-kapt'
 // grpc
 apply plugin: 'com.google.protobuf'
 
-group 'com.myblog'
-version '1.0-SNAPSHOT'
+group 'com.todo'
+version '0.0.1'
 
 compileKotlin {
     kotlinOptions {
         jvmTarget = "11"
-        freeCompilerArgs += [
-                "-Xuse-experimental=kotlinx.coroutines.ObsoleteCoroutinesApi"
-        ]
+        freeCompilerArgs = ["-Xjsr305=strict"]
     }
 }
 compileTestKotlin {
-    kotlinOptions.jvmTarget = "11"
+    kotlinOptions {
+        jvmTarget = "11"
+        freeCompilerArgs = ["-Xjsr305=strict"]
+    }
 }
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 dependencies {
     /* kotlin */
-    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     // kotlin コルーチン
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version")
 
     /* spring */
     implementation("org.springframework.boot:spring-boot-starter-web")
+    runtimeOnly("org.springframework.boot:spring-boot-devtools")
 
     /* json */
     implementation("com.squareup.moshi:moshi:${moshiVersion}")
@@ -87,6 +92,8 @@ dependencies {
     // https://github.com/marcoferrer/kroto-plus
     implementation("com.github.marcoferrer.krotoplus:kroto-plus-coroutines:$krotoplus_version")
     implementation("com.github.marcoferrer.krotoplus:kroto-plus-message:$krotoplus_version")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
 // grpc 生成タスク
@@ -134,4 +141,8 @@ sourceSets {
             srcDir("$buildDir/generated/source/proto/main/coroutines")
         }
     }
+}
+
+test {
+    useJUnitPlatform()
 }
