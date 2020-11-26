@@ -22,7 +22,8 @@ detekt {
     input = files("src/main/kotlin")
     failFast = true // fail build on any finding
     buildUponDefaultConfig = true // preconfigure defaults
-    config = files("config/detekt.yml") // point to your custom config defining rules to run, overwriting default behavior
+    config = files("config/detekt.yml")
+    // point to your custom config defining rules to run, overwriting default behavior
     baseline = file("config/baseline.xml") // a way of suppressing issues before introducing detekt
 
     reports {
@@ -92,6 +93,7 @@ dependencies {
     // https://github.com/marcoferrer/kroto-plus
     implementation("com.github.marcoferrer.krotoplus:kroto-plus-coroutines:$krotoplus_version")
     implementation("com.github.marcoferrer.krotoplus:kroto-plus-message:$krotoplus_version")
+    implementation('io.github.lognet:grpc-spring-boot-starter:4.2.2')
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
@@ -139,6 +141,14 @@ sourceSets {
             srcDir("$buildDir/generated/source/proto/main/java")
             srcDir("$buildDir/generated/source/proto/main/grpc")
             srcDir("$buildDir/generated/source/proto/main/coroutines")
+        }
+    }
+}
+
+configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if ("io.grpc".equalsIgnoreCase(details.requested.group)) {
+            details.useVersion "1.33.0"
         }
     }
 }
