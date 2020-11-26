@@ -1,0 +1,18 @@
+syntax = "proto3";
+package grpc.error;
+option java_package = "com.grpc.api";
+
+enum ErrorCode {
+  UNKNOWN = 0;
+  INVALID_RECEIPT = 1;
+  EXPIRED_RECEIPT = 2;
+  INVALID_CARD = 3;
+  EXPIRED_CARD = 4;
+  INVALID_COUNTRY = 5;
+  PREPAID_CARD = 6;
+}
+
+message ErrorDetail {
+  ErrorCode code = 1;
+  string    message = 2;
+}
