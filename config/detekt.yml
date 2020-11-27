@@ -1,4 +1,3 @@
-
 config:
   # is automatically ignored when custom-checks.jar is on the classpath
   # however other CI checks use the argsfile where our plugin is not applied
@@ -9,24 +8,24 @@ custom-checks:
   active: true
   SpekTestDiscovery:
     active: true
-    includes: ['**/test/**/*Spec.kt']
+    includes: [ '**/test/**/*Spec.kt' ]
 
 comments:
   CommentOverPrivateProperty:
     active: true
   UndocumentedPublicClass:
     active: true
-    excludes: ['**/*.kt']
-    includes: ['**/detekt-api/src/main/**/api/*.kt']
+    excludes: [ '**/*.kt' ]
+    includes: [ '**/detekt-api/src/main/**/api/*.kt' ]
   UndocumentedPublicFunction:
     active: true
-    excludes: ['**/*.kt']
-    includes: ['**/detekt-api/src/main/**/api/*.kt']
+    excludes: [ '**/*.kt' ]
+    includes: [ '**/detekt-api/src/main/**/api/*.kt' ]
 
 complexity:
   StringLiteralDuplication:
     active: true
-    excludes: ['**/test/**', '**/*.Test.kt', '**/*.Spec.kt']
+    excludes: [ '**/test/**', '**/*.Test.kt', '**/*.Spec.kt' ]
     threshold: 5
     ignoreAnnotation: true
     excludeStringsWithLessThan5Characters: true
@@ -41,6 +40,15 @@ complexity:
     ignoreSingleWhenExpression: true
   MethodOverloading:
     active: true
+  LongMethod:
+    active: true
+    threshold: 20
+  LongParameterList:
+    active: false
+    functionThreshold: 5
+  LargeClass:
+    active: false
+    threshold: 70
 
 exceptions:
   NotImplementedDeclaration:
@@ -70,6 +78,9 @@ formatting:
     active: false
 
 naming:
+  MatchingDeclarationName:
+    active: false
+    mustBeFirst: false
   MemberNameEqualsClassName:
     active: true
   VariableNaming:
@@ -99,7 +110,7 @@ potential-bugs:
     active: true
   UnsafeCast:
     active: true
-    excludes: ['**/test/**', '**/*.Test.kt', '**/*.Spec.kt']
+    excludes: [ '**/test/**', '**/*.Test.kt', '**/*.Spec.kt' ]
   UselessPostfixExpression:
     active: true
   WrongEqualsTypeParameter:
@@ -114,24 +125,24 @@ style:
     active: true
   ForbiddenComment:
     active: true
-    values: ['TODO:', 'FIXME:', 'STOPSHIP:', '@author']
+    values: [ 'TODO:', 'FIXME:', 'STOPSHIP:', '@author' ]
   FunctionOnlyReturningConstant:
     active: true
   LoopWithTooManyJumpStatements:
     active: true
   LibraryCodeMustSpecifyReturnType:
     active: true
-    excludes: ['**/*.kt']
-    includes: ['**/detekt-api/src/main/**/api/*.kt']
+    excludes: [ '**/*.kt' ]
+    includes: [ '**/detekt-api/src/main/**/api/*.kt' ]
   MaxLineLength:
-    excludes: ['**/test/**', '**/*.Test.kt', '**/*.Spec.kt']
+    excludes: [ '**/test/**', '**/*.Test.kt', '**/*.Spec.kt' ]
     excludeCommentStatements: true
   MagicNumber:
     ignoreHashCodeFunction: true
     ignorePropertyDeclaration: true
     ignoreAnnotation: true
     ignoreEnums: true
-    ignoreNumbers: ['-1', '0', '1', '2', '100', '1000']
+    ignoreNumbers: [ '-1', '0', '1', '2', '100', '1000' ]
   MayBeConst:
     active: true
   NestedClassesVisibility:
@@ -156,4 +167,6 @@ style:
   UselessCallOnNotNull:
     active: true
   UtilityClassWithPublicConstructor:
+    active: true
+  WildcardImport:
     active: true
