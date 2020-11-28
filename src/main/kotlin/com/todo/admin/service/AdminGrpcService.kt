@@ -4,6 +4,7 @@ import com.grpc.api.FirebaseAdmin
 import com.grpc.api.FirebaseAdminServiceCoroutineGrpc
 import com.grpc.api.HttpGrpcStatus
 import com.grpc.api.LoginResponse
+import com.grpc.api.UserResponse
 import com.todo.admin.service.interceptor.LoggingInterceptor
 import io.grpc.StatusRuntimeException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -46,6 +47,22 @@ class AdminGrpcService : FirebaseAdminServiceCoroutineGrpc.FirebaseAdminServiceI
             } catch (e: StatusRuntimeException) {
                 channels.remove(responseChannel)
             }
+        }
+    }
+
+    override suspend fun registerUser(request: FirebaseAdmin.UserRequest): FirebaseAdmin.UserResponse {
+        return UserResponse {
+            uid = "uid"
+            email = request.email
+            userName = request.userName
+        }
+    }
+
+    override suspend fun updateUser(request: FirebaseAdmin.UserRequest): FirebaseAdmin.UserResponse {
+        return UserResponse {
+            uid = "uid"
+            email = request.email
+            userName = request.userName
         }
     }
 
