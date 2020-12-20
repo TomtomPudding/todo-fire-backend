@@ -1,8 +1,0 @@
-server:
-  tomcat:
-    max-threads: 200
-
-spring:
-  devtools:
-    livereload:
-      enabled: false
