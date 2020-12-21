@@ -1,11 +1,15 @@
-package com.todo.admin.service.interceptor
+package com.todo.admin.adapter.interceptor
 
 import io.grpc.Metadata
 import io.grpc.ServerCall
 import io.grpc.ServerCallHandler
 import io.grpc.ServerInterceptor
+import org.lognet.springboot.grpc.GRpcGlobalInterceptor
 import org.slf4j.LoggerFactory
+import org.springframework.core.annotation.Order
 
+@Order(10)
+@GRpcGlobalInterceptor
 class LoggingInterceptor : ServerInterceptor {
 
     private val log = LoggerFactory.getLogger(LoggingInterceptor::class.java)

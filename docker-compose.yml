@@ -1,0 +1,18 @@
+version: "3.7"
+services:
+  go-grpc:
+    build:
+      context: ./client-test/
+      dockerfile: Dockerfile
+    container_name: "go-grpc"
+    volumes:
+      - ./client-test:/go-grpc
+    tty: true
+    privileged: true
+
+  todo-dynamodb:
+    image: amazon/dynamodb-local
+    container_name: 'todo-dynamodb'
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath .
+    ports:
+      - 8000:8000

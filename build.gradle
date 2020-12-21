@@ -79,8 +79,8 @@ dependencies {
     implementation("com.squareup.moshi:moshi:${moshiVersion}")
     implementation("com.squareup.moshi:moshi-kotlin:${moshiVersion}")
 
-    /* firebase-admin */
-    implementation("com.google.firebase:firebase-admin:${firebaseAdminVersion}")
+    /* dynamodb */
+    implementation("io.github.boostchicken:spring-data-dynamodb:${springDataDynamodbVersion}")
 
     // grpc コード生成用
     implementation("com.google.protobuf:protobuf-java:${protobuf_version}")
@@ -89,11 +89,14 @@ dependencies {
     implementation("io.grpc:grpc-stub:${grpc_version}")
     implementation("io.grpc:grpc-netty:${grpc_version}")
 
+//    implementation("com.squareup.okhttp3:logging-interceptor")
+
     // https://qiita.com/yt8492/items/345f4de495feb18201ff
     // https://github.com/marcoferrer/kroto-plus
     implementation("com.github.marcoferrer.krotoplus:kroto-plus-coroutines:$krotoplus_version")
     implementation("com.github.marcoferrer.krotoplus:kroto-plus-message:$krotoplus_version")
     implementation('io.github.lognet:grpc-spring-boot-starter:4.2.2')
+
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

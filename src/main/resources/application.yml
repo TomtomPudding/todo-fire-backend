@@ -1,3 +1,6 @@
+environments:
+  profile: Local
+
 server:
   tomcat:
     max-threads: 200
@@ -6,3 +9,11 @@ spring:
   devtools:
     livereload:
       enabled: false
+  data:
+    dynamodb:
+      entity2ddl:
+        auto: create-only
+        gsiProjectionType: ALL
+        readCapacity: 1
+        writeCapacity: 1
+

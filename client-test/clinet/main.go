@@ -18,19 +18,27 @@ func request(client pb.FirebaseAdminServiceClient) error {
         time.Second,
     )
     defer cancel()
-//     loginRequest := pb.LogoutRequest{}
-    reply, err := client.Logout(ctx, &pb.Empty {})
+    // loginRequest := pb.LogoutRequest{}
+    // reply, err := client.Logout(ctx, &pb.Empty {})
+
+    loginRequest := pb.LoginRequest{
+        Uid : "84930249320",
+        Email : "tomcat@gjkfljdsa.com",
+    }
+    reply, err := client.Login(ctx, &loginRequest)
 
     log.Printf("start")
     if err != nil {
         return errors.Wrap(err, "受取り失敗")
     }
-    log.Printf("サーバからの受け取り\n %d %s", reply.GetCode(), reply.GetMessage())
+    // log.Printf("サーバからの受け取り\n %d %s", reply.GetCode(), reply.GetMessage())
+    log.Printf("サーバからの受け取り\n %s %s", reply.GetUid(), reply.GetEmail())
     return nil
 }
 
 func login() error {
-    address := "mainhost:6565"
+    // address := "mainhost:6565"
+    address := "host.docker.internal:6565"
     conn, err := grpc.Dial(
         address,
         grpc.WithInsecure(),
