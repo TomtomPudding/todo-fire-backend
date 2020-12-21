@@ -1,12 +1,8 @@
 package com.todo.admin.app.service
 
-import com.grpc.api.FirebaseAdmin
-import com.grpc.api.FirebaseAdminServiceCoroutineGrpc
-import com.grpc.api.HttpGrpcStatus
-import com.grpc.api.LoginResponse
-import com.grpc.api.UserResponse
+import com.grpc.api.*
 import com.todo.admin.adapter.interceptor.LoggingInterceptor
-import com.todo.admin.repository.UserRepository
+import com.todo.admin.app.repository.UserRepository
 import io.grpc.StatusRuntimeException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.SendChannel

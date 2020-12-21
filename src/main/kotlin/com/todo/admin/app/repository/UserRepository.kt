@@ -1,4 +1,4 @@
-package com.todo.admin.repository
+package com.todo.admin.app.repository
 
 import com.todo.admin.domain.entity.UserEntity
 import org.socialsignin.spring.data.dynamodb.repository.EnableScan
