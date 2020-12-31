@@ -10,17 +10,20 @@ import (
     pb "grpc-sample/pb/grpc_firebase_admin"
 
     "google.golang.org/grpc"
+    "google.golang.org/grpc/metadata"
 )
 
 func request(client pb.FirebaseAdminServiceClient) error {
     ctx, cancel := context.WithTimeout(
         context.Background(),
-        time.Second,
+        time.Second * 100,
     )
     defer cancel()
     // loginRequest := pb.LogoutRequest{}
     // reply, err := client.Logout(ctx, &pb.Empty {})
 
+    md := metadata.Pairs("Authorization", "bearer test_token")
+    ctx = metadata.NewOutgoingContext(context.Background(), md)
     loginRequest := pb.LoginRequest{
         Uid : "84930249320",
         Email : "tomcat@gjkfljdsa.com",
