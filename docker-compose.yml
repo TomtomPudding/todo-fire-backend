@@ -16,3 +16,22 @@ services:
     command: -jar DynamoDBLocal.jar -sharedDb -dbPath .
     ports:
       - 8000:8000
+
+  batch-notebook:
+    build: ./notebook
+    container_name: "batch-notebook"
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    volumes:
+      - ./notebook:/home/jovyan/work
+      # ローカル認証情報
+      - ~/.aws:/home/jovyan/.aws
+    command: start.sh jupyter lab --NotebookApp.token=''
+
+  redis:
+    container_name: "todo-redis"
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
