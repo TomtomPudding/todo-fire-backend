@@ -6,7 +6,7 @@ service FirebaseAdminService {
   // サーバーからクライアントにレスポンスを送り続ける
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Logout(Empty) returns (HttpGrpcStatus);
-  rpc AuthState(Empty) returns (stream LoginResponse);
+  rpc AuthState(Empty) returns (stream LoginStatusResponse);
   rpc RegisterUser(UserRequest) returns (UserResponse);
   rpc UpdateUser(UserRequest) returns (UserResponse);
 }
@@ -14,7 +14,8 @@ service FirebaseAdminService {
 // message
 message LoginRequest {
   string uid = 1;
-  string email = 2;
+  string password = 2;
+  string email = 3;
 }
 
 message LoginResponse {
@@ -24,6 +25,10 @@ message LoginResponse {
   string email = 2;
   string userName = 3;
   string token = 4;
+}
+
+message LoginStatusResponse {
+  bool status = 1;
 }
 
 message UserRequest {

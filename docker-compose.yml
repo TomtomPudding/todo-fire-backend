@@ -7,6 +7,7 @@ services:
     container_name: "go-grpc"
     volumes:
       - ./client-test:/go-grpc
+      - ./src/main/proto:/go-grpc/proto
     tty: true
     privileged: true
 
