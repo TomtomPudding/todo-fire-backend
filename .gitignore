@@ -93,4 +93,5 @@ logs/
 src/main/resources/key
 client-test/go.mod
 client-test/go.sum
+client-test/pb
 out

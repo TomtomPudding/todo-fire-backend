@@ -10,6 +10,11 @@ services:
       - ./src/main/proto:/go-grpc/proto
     tty: true
     privileged: true
+    command: >
+      protoc \
+        --proto_path /go-grpc/proto  \
+        --go_out=plugins=grpc:/go-grpc/pb/grpc_firebase_admin  \
+        /go-grpc/proto/firebase-admin.proto
 
   todo-dynamodb:
     image: amazon/dynamodb-local

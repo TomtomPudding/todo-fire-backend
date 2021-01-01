@@ -13,3 +13,4 @@ RUN ln -s /protoc/bin/protoc /bin/protoc
 WORKDIR /go-grpc
 ENV GO111MODULE on
 RUN go get -u github.com/golang/protobuf/protoc-gen-go
+RUN go mod init grpc-sample
