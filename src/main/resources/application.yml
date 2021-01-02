@@ -16,4 +16,8 @@ spring:
         gsiProjectionType: ALL
         readCapacity: 1
         writeCapacity: 1
-
+  redis:
+    host: localhost
+    port: 6379
+  session:
+    store-type: redis

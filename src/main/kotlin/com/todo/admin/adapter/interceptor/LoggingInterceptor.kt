@@ -8,6 +8,9 @@ import org.lognet.springboot.grpc.GRpcGlobalInterceptor
 import org.slf4j.LoggerFactory
 import org.springframework.core.annotation.Order
 
+/**
+ * ログ出力用(グローバル)
+ */
 @Order(10)
 @GRpcGlobalInterceptor
 class LoggingInterceptor : ServerInterceptor {
