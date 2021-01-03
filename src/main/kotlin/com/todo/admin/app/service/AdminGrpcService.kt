@@ -7,6 +7,7 @@ import com.grpc.api.LoginResponse
 import com.grpc.api.LoginStatusResponse
 import com.grpc.api.UserResponse
 import com.todo.admin.app.repository.UserRepository
+import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.SendChannel
@@ -19,7 +20,6 @@ import org.springframework.security.core.context.SecurityContext
 import org.springframework.security.core.context.SecurityContextHolder
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import javax.security.auth.message.AuthException
 
 @GRpcService
 @ExperimentalCoroutinesApi
@@ -27,12 +27,17 @@ class AdminGrpcService(
     private val userRepository: UserRepository
 ) : FirebaseAdminServiceCoroutineGrpc.FirebaseAdminServiceImplBase() {
 
+    private val invalidUserMessage = "入力が不正です。内容をご確認ください。"
+
     private val channels = ConcurrentHashMap.newKeySet<SendChannel<FirebaseAdmin.LoginStatusResponse>>()
 
     override suspend fun login(request: FirebaseAdmin.LoginRequest): FirebaseAdmin.LoginResponse {
-        val user = userRepository.findByIdOrNull(request.uid) ?: throw AuthException("入力が不正です。内容をご確認ください。")
-        if (user.password != request.password) throw AuthException("入力が不正です。内容をご確認ください。")
+        val user = userRepository.findByIdOrNull(request.uid)
+        if (user == null || user.password != request.password) {
+            throw StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(invalidUserMessage))
+        }
 
+        val a = SecurityContextHolder.getContext().authentication
         val securityContext: SecurityContext = SecurityContextHolder.createEmptyContext()
         securityContext.authentication = UsernamePasswordAuthenticationToken(
             user.id,

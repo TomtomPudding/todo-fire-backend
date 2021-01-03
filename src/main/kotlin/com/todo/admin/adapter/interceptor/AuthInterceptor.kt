@@ -8,13 +8,11 @@ import io.grpc.Metadata
 import io.grpc.ServerCall
 import io.grpc.ServerCallHandler
 import io.grpc.ServerInterceptor
-import org.lognet.springboot.grpc.GRpcGlobalInterceptor
 import org.springframework.core.annotation.Order
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.security.core.context.SecurityContextHolder
 
 @Order(30)
-@GRpcGlobalInterceptor
 class AuthInterceptor(
     private val userRepository: UserRepository
 ) : ServerInterceptor {

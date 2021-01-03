@@ -25,8 +25,9 @@ func request(client pb.FirebaseAdminServiceClient) error {
     md := metadata.Pairs("Authorization", "bearer test_token")
     ctx = metadata.NewOutgoingContext(context.Background(), md)
     loginRequest := pb.LoginRequest{
-        Uid : "84930249320",
+        Uid : "90000001",
         Email : "tomcat@gjkfljdsa.com",
+        Password : "V8dW482gFigp",
     }
     reply, err := client.Login(ctx, &loginRequest)
 
