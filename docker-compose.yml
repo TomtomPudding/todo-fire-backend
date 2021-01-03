@@ -10,11 +10,6 @@ services:
       - ./src/main/proto:/go-grpc/proto
     tty: true
     privileged: true
-    command: >
-      protoc \
-        --proto_path /go-grpc/proto  \
-        --go_out=plugins=grpc:/go-grpc/pb/grpc_firebase_admin  \
-        /go-grpc/proto/firebase-admin.proto
 
   todo-dynamodb:
     image: amazon/dynamodb-local
@@ -35,9 +30,3 @@ services:
       # ローカル認証情報
       - ~/.aws:/home/jovyan/.aws
     command: start.sh jupyter lab --NotebookApp.token=''
-
-  redis:
-    container_name: "todo-redis"
-    image: "redis:latest"
-    ports:
-      - "6379:6379"
