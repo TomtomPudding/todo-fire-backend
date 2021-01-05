@@ -1,7 +1,7 @@
 package com.todo.admin.app.service
 
-import com.grpc.api.FirebaseAdmin
-import com.grpc.api.FirebaseAdminServiceCoroutineGrpc
+import com.grpc.api.Admin
+import com.grpc.api.AdminServiceCoroutineGrpc
 import com.grpc.api.HttpGrpcStatus
 import com.grpc.api.LoginResponse
 import com.grpc.api.LoginStatusResponse
@@ -24,14 +24,14 @@ import java.util.concurrent.ConcurrentHashMap
 class AdminGrpcService(
     private val userRepository: UserRepository,
     private val redisTemplate: StringRedisTemplate
-) : FirebaseAdminServiceCoroutineGrpc.FirebaseAdminServiceImplBase() {
+) : AdminServiceCoroutineGrpc.AdminServiceImplBase() {
 
     private val adapter = Moshi.Builder().build().adapter(UsernamePasswordSession::class.java)
     private val invalidUserMessage = "入力が不正です。内容をご確認ください。"
 
-    private val channels = ConcurrentHashMap.newKeySet<SendChannel<FirebaseAdmin.LoginStatusResponse>>()
+    private val channels = ConcurrentHashMap.newKeySet<SendChannel<Admin.LoginStatusResponse>>()
 
-    override suspend fun login(request: FirebaseAdmin.LoginRequest): FirebaseAdmin.LoginResponse {
+    override suspend fun login(request: Admin.LoginRequest): Admin.LoginResponse {
         val user = userRepository.findByIdOrNull(request.uid)
         if (user == null || user.password != request.password) {
             throw StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(invalidUserMessage))
@@ -48,7 +48,7 @@ class AdminGrpcService(
         }
     }
 
-    override suspend fun logout(request: FirebaseAdmin.Empty): FirebaseAdmin.HttpGrpcStatus {
+    override suspend fun logout(request: Admin.Empty): Admin.HttpGrpcStatus {
         redisTemplate.delete(SessionKey.USER.key)
 
         return HttpGrpcStatus {
@@ -58,8 +58,8 @@ class AdminGrpcService(
     }
 
     override suspend fun authState(
-        request: FirebaseAdmin.Empty,
-        responseChannel: SendChannel<FirebaseAdmin.LoginStatusResponse>
+        request: Admin.Empty,
+        responseChannel: SendChannel<Admin.LoginStatusResponse>
     ) {
         channels.forEach {
             val user = adapter.fromJson(redisTemplate.opsForValue().get(SessionKey.USER.key)!!)

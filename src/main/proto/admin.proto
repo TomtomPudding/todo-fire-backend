@@ -2,14 +2,14 @@ syntax = "proto3";
 package grpc.firebase.admin;
 option java_package = "com.grpc.api";
 
-service FirebaseAdminService {
+service AdminService {
   // サーバーからクライアントにレスポンスを送り続ける
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Logout(Empty) returns (HttpGrpcStatus);
   rpc AuthState(Empty) returns (stream LoginStatusResponse);
 }
 
-service FirebaseAdminUserService {
+service UserService {
   rpc RegisterUser(UserRequest) returns (UserResponse);
   rpc UpdateUser(UserRequest) returns (UserResponse);
 }

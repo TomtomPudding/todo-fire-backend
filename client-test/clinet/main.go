@@ -7,13 +7,13 @@ import (
 
     "github.com/pkg/errors"
 
-    pb "grpc-sample/pb/grpc_firebase_admin"
+    pb "grpc-sample/pb/admin"
 
     "google.golang.org/grpc"
     "google.golang.org/grpc/metadata"
 )
 
-func request(client pb.FirebaseAdminServiceClient) error {
+func request(client pb.AdminServiceClient) error {
     ctx, cancel := context.WithTimeout(
         context.Background(),
         time.Second * 100,
@@ -51,7 +51,7 @@ func login() error {
         return errors.Wrap(err, "コネクションエラー")
     }
     defer conn.Close()
-    client := pb.NewFirebaseAdminServiceClient(conn)
+    client := pb.NewAdminServiceClient(conn)
     return request(client)
 }
 
