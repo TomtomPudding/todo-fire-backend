@@ -75,6 +75,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     runtimeOnly("org.springframework.boot:spring-boot-devtools")
     implementation("org.springframework.security:spring-security-core:5.4.2")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     /* json */
     implementation("com.squareup.moshi:moshi:${moshiVersion}")

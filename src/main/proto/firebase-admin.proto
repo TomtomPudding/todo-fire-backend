@@ -7,6 +7,9 @@ service FirebaseAdminService {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Logout(Empty) returns (HttpGrpcStatus);
   rpc AuthState(Empty) returns (stream LoginStatusResponse);
+}
+
+service FirebaseAdminUserService {
   rpc RegisterUser(UserRequest) returns (UserResponse);
   rpc UpdateUser(UserRequest) returns (UserResponse);
 }

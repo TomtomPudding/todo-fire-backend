@@ -30,3 +30,9 @@ services:
       # ローカル認証情報
       - ~/.aws:/home/jovyan/.aws
     command: start.sh jupyter lab --NotebookApp.token=''
+
+  redis:
+    container_name: "todo-redis"
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
