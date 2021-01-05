@@ -7,6 +7,7 @@ import com.grpc.api.LoginResponse
 import com.grpc.api.LoginStatusResponse
 import com.squareup.moshi.Moshi
 import com.todo.admin.app.repository.UserRepository
+import com.todo.admin.config.SessionKey
 import com.todo.admin.domain.session.UsernamePasswordSession
 import io.grpc.Status
 import io.grpc.StatusRuntimeException
@@ -16,9 +17,7 @@ import org.lognet.springboot.grpc.GRpcService
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
-import org.springframework.security.core.context.SecurityContextHolder
 import java.util.concurrent.ConcurrentHashMap
-
 
 @GRpcService
 @ExperimentalCoroutinesApi
@@ -38,19 +37,10 @@ class AdminGrpcService(
             throw StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(invalidUserMessage))
         }
 
-        try {
-            redisTemplate.opsForValue().set(
-                "USER", adapter.toJson(
-                    UsernamePasswordSession(
-                        user.id,
-                        user.password,
-                        "ROLE_USER"
-                    )
-                )
-            )
-        } catch (e: Exception) {
-            print(e)
-        }
+        redisTemplate.opsForValue().set(
+            SessionKey.USER.key,
+            adapter.toJson(UsernamePasswordSession(user.id, user.password, "ROLE_USER"))
+        )
         return LoginResponse {
             uid = request.uid
             email = request.email
@@ -59,7 +49,7 @@ class AdminGrpcService(
     }
 
     override suspend fun logout(request: FirebaseAdmin.Empty): FirebaseAdmin.HttpGrpcStatus {
-        SecurityContextHolder.clearContext()
+        redisTemplate.delete(SessionKey.USER.key)
 
         return HttpGrpcStatus {
             code = HttpStatus.OK.value()
@@ -72,7 +62,7 @@ class AdminGrpcService(
         responseChannel: SendChannel<FirebaseAdmin.LoginStatusResponse>
     ) {
         channels.forEach {
-            val user = adapter.fromJson(redisTemplate!!.opsForValue().get("USER")!!)
+            val user = adapter.fromJson(redisTemplate.opsForValue().get(SessionKey.USER.key)!!)
             val currentStatus = user?.id != null
 
             try {

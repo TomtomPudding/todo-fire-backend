@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class Environments {
 
-    enum class EnvProfile(name: String) {
+    enum class EnvProfile(val env: String) {
         LOCAL("Local"),
         DEV("Develop"),
         STG("Staging"),
@@ -14,14 +14,14 @@ class Environments {
 
         companion object {
             fun isLocal(env: String): Boolean =
-                env.equals((LOCAL.name), ignoreCase = true)
+                env.equals((LOCAL.env), ignoreCase = true)
 
             fun findName(name: String): String =
                 when (name) {
-                    LOCAL.name -> "Local"
-                    DEV.name -> "Dev"
-                    STG.name -> "Stg"
-                    PRD.name -> "Prd"
+                    LOCAL.env -> "Local"
+                    DEV.env -> "Dev"
+                    STG.env -> "Stg"
+                    PRD.env -> "Prd"
                     else -> "Local"
                 }
         }
