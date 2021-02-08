@@ -2,103 +2,146 @@ syntax = "proto3";
 package grpc.firebase.admin;
 option java_package = "com.grpc.api";
 
+//  string ではデフォルト値は空文字列である．
+//  bytes ではデフォルト値は空バイト列である．
+//  bool ではデフォルト値は false である．
+//  数値型ではデフォルト値はゼロである．
+//  列挙型 (enum) ではデフォルト値は最初に定義されている列挙値であり，これは 0 でなければならない．
+
 service ProjectService {
   // サーバーからクライアントにレスポンスを送り続ける
-  rpc SearchProject(ProjectSearchRequest) returns (stream ProjectSearchResponse);
-  rpc UpdateProject(ProjectUpdateRequest) returns (ProjectUpdateResponse);
-  rpc RegisterProject(ProjectUpdateRequest) returns (ProjectUpdateResponse);
-  rpc DeleteProject(ProjectDeleteRequest) returns (DeleteResponse);
+  rpc Search(ProjectSearchRequest) returns (stream ProjectSearchResponse);
+  rpc SearchAll(ProjectSearchAllRequest) returns (stream ProjectSearchAllResponse);
+  rpc Update(ProjectUpdateRequest) returns (ProjectUpdateResponse);
+  rpc Register(ProjectRegisterRequest) returns (ProjectUpdateResponse);
+  rpc Delete(ProjectDeleteRequest) returns (DeleteResponse);
+}
+
+
+service ToDoService {
+  rpc Update(ToDoUpdateRequest) returns (ToDoUpdateResponse);
+  rpc Register(ToDoUpdateRequest) returns (ToDoUpdateResponse);
+  rpc Delete(ToDoDeleteRequest) returns (DeleteResponse);
 }
 
 service GroupService {
-  rpc UpdateGroup(GroupUpdateRequest) returns (GroupUpdateResponse);
-  rpc RegisterGroup(GroupUpdateRequest) returns (GroupUpdateResponse);
-  rpc DeleteGroup(GroupDeleteRequest) returns (DeleteResponse);
-}
-
-service TodoService {
-  rpc UpdateTodo(TodoUpdateRequest) returns (TodoUpdateResponse);
-  rpc RegisterTodo(TodoUpdateRequest) returns (TodoUpdateResponse);
-  rpc DeleteTodo(TodoDeleteRequest) returns (DeleteResponse);
+  rpc Update(GroupUpdateRequest) returns (GroupUpdateResponse);
+  rpc Register(GroupRegisterRequest) returns (GroupUpdateResponse);
+  rpc Delete(GroupDeleteRequest) returns (DeleteResponse);
 }
 
 // ログイン状態チェックをサーバで行う
 // project
 message ProjectSearchRequest {
-  string projectId = 1;
+  string id = 1;
 }
 
-message ProjectUpdateRequest {
+message ProjectSearchAllRequest {
+  ProjectType type = 1;
+  Color color = 2;
+  ProjectStatus status = 3;
+}
+
+message ProjectRegisterRequest {
   string name = 1;
 }
 
+message ProjectUpdateRequest {
+  string id = 1;
+  string name = 2;
+}
+
 message ProjectDeleteRequest {
-  string projectId = 1;
+  string id = 1;
 }
 
 message ProjectSearchResponse {
-  string projectId = 1;
-  string title = 2;
-  repeated ProjectGroup group = 3;
-  repeated Todo todo = 4;
+  string id = 1;
+  string name = 2;
+  repeated ProjectGroup groups = 3;
+  ProjectType type = 4;
+}
+
+message ProjectSearchAllResponse {
+  repeated ProjectAllTitle projects = 1;
+}
+
+message ProjectAllTitle {
+  string id = 1;
+  string name = 2;
+  ProjectType type = 3;
 }
 
 message ProjectUpdateResponse {
-  string projectId = 1;
+  string id = 1;
+  string name = 2;
+}
+
+message ProjectGroup {
+  string groupId = 1;
+  string name = 2;
+  repeated ToDo todos = 3;
+}
+
+// todo
+message ToDoUpdateRequest {
+  string id = 1;
+  string groupId = 2;
+  string title = 3;
+  string content = 4;
+}
+
+message ToDoDeleteRequest {
+  string id = 1;
+}
+
+message ToDoUpdateResponse {
+  string id = 1;
+  string groupId = 2;
+  string title = 3;
+  string content = 4;
+}
+
+message ToDo {
+  string id = 1;
   string title = 2;
+  string content = 3;
+}
+
+// group
+message GroupUpdateRequest {
+  string id = 1;
+  string name = 2;
+  string content = 3;
+  int32 position = 4;
+  Color color = 5;
+}
+
+message GroupRegisterRequest {
+  string id = 1;
+  string name = 2;
+  string content = 3;
+  int32 position = 4;
+  Color color = 5;
+}
+
+message GroupDeleteRequest {
+  string id = 1;
+}
+
+message GroupUpdateResponse {
+  string id = 1;
+  string name = 2;
+  string content = 3;
+  Color color = 4;
 }
 
 message DeleteResponse {
   string message = 1;
 }
 
-// group
-message GroupUpdateRequest {
-  string name = 1;
-  GroupColor color = 3;
-}
-
-message GroupDeleteRequest {
-  string groupId = 1;
-}
-message GroupUpdateResponse {
-  string groupId = 1;
-  string title = 2;
-  GroupColor color = 3;
-  repeated string todoIds = 4;
-}
-
-message ProjectGroup {
-  string groupId = 1;
-  string title = 2;
-  GroupColor color = 3;
-  repeated string todoIds = 4;
-}
-
-// todo
-message TodoUpdateRequest {
-  string name = 1;
-  string content = 2;
-}
-
-message TodoDeleteRequest {
-  string todoId = 1;
-}
-
-message TodoUpdateResponse {
-  string todoId = 1;
-  string title = 2;
-  string contant = 3;
-}
-
-message Todo {
-  string todoId = 1;
-  string title = 2;
-  string contant = 3;
-}
-
-enum GroupColor {
-  BLACK = 0;
+enum Color {
+  UNKNOWN_COLOR = 0;
   GRAY = 1;
   LIGHT_GRAY = 2;
   SKY_BLUE = 3;
@@ -111,4 +154,16 @@ enum GroupColor {
   OLIVE = 10;
   LIME = 11;
   LIME_GREEN = 12;
+  BLACK = 13;
+}
+
+enum ProjectType {
+  UNKNOWN_TYPE = 0;
+  PRIVATE = 1;
+  COMMUNITY = 2;
+}
+
+enum ProjectStatus {
+  OPEN = 0;
+  CLOSE = 1;
 }

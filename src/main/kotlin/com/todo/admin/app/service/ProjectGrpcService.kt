@@ -1,0 +1,177 @@
+package com.todo.admin.app.service
+
+import com.grpc.api.Client
+import com.grpc.api.DeleteResponse
+import com.grpc.api.ProjectAllTitle
+import com.grpc.api.ProjectGroup
+import com.grpc.api.ProjectServiceCoroutineGrpc
+import com.grpc.api.ProjectUpdateResponse
+import com.grpc.api.ToDo
+import com.todo.admin.app.repository.ProjectRepository
+import com.todo.admin.app.repository.UserRepository
+import com.todo.admin.app.service.session.SessionManager
+import com.todo.admin.domain.entity.ProjectEntity
+import com.todo.admin.domain.expection.GrpcException
+import io.grpc.StatusRuntimeException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.broadcast
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import org.lognet.springboot.grpc.GRpcService
+import org.springframework.data.repository.findByIdOrNull
+import java.util.*
+
+
+@GRpcService
+@ExperimentalCoroutinesApi
+class ProjectGrpcService(
+    private val projectRepository: ProjectRepository,
+    private val userRepository: UserRepository,
+    private val sessionManager: SessionManager
+) : ProjectServiceCoroutineGrpc.ProjectServiceImplBase() {
+
+    val failedSearchProject = "Project 情報がありません"
+
+    private fun searchChanel(
+        request: Client.ProjectSearchRequest
+    ) = GlobalScope.broadcast<Client.ProjectSearchResponse> {
+        while (isActive) {
+            try {
+                val updateUserId = sessionManager.getLoginUser().id
+                val project = getWritableProject(updateUserId, request.id)
+                send {
+                    id = project.id
+                    name = project.name
+                    addAllGroups(createGroupResponse(project))
+                    type = project.type.getType()
+                }
+            } catch (e: StatusRuntimeException) {
+                cancel()
+            }
+            delay(10_00)
+        }
+    }
+
+    private fun searchAllChanel(
+        request: Client.ProjectSearchAllRequest
+    ) = GlobalScope.broadcast<Client.ProjectSearchAllResponse> {
+        while (isActive) {
+            try {
+                val updateUserId = sessionManager.getLoginUser().id
+                val allTitle = getWritableProjects(updateUserId).filter { property ->
+                    property.type.equalsType(request.type) &&
+                            property.status.equalsStatus(request.status) &&
+                            property.color.equalsColor(request.color)
+                }.map { property ->
+                    ProjectAllTitle {
+                        id = property.id
+                        name = property.name
+                        type = property.type.getType()
+                    }
+                }
+                send {
+                    addAllProjects(allTitle)
+                }
+            } catch (e: StatusRuntimeException) {
+                cancel()
+            }
+            delay(10_00)
+        }
+    }
+
+    override suspend fun search(
+        request: Client.ProjectSearchRequest,
+        responseChannel: SendChannel<Client.ProjectSearchResponse>
+    ) {
+        val searchChannel = searchChanel(request).openSubscription()
+        searchChannel.consumeEach {
+            responseChannel.send(it)
+        }
+    }
+
+    override suspend fun searchAll(
+        request: Client.ProjectSearchAllRequest,
+        responseChannel: SendChannel<Client.ProjectSearchAllResponse>
+    ) {
+        val searchChannel = searchAllChanel(request).openSubscription()
+        searchChannel.consumeEach {
+            responseChannel.send(it)
+        }
+    }
+
+
+    override suspend fun update(request: Client.ProjectUpdateRequest): Client.ProjectUpdateResponse {
+        val updateUserId = sessionManager.getLoginUser().id
+
+        val project = getWritableProject(updateUserId, request.id).apply {
+            name = request.name
+        }
+        projectRepository.save(project)
+        return ProjectUpdateResponse {
+            id = project.id
+            name = project.name
+        }
+    }
+
+    override suspend fun register(request: Client.ProjectRegisterRequest): Client.ProjectUpdateResponse {
+        val project = ProjectEntity(
+            id = UUID.randomUUID().toString(),
+            name = request.name
+        )
+        projectRepository.save(project)
+        return ProjectUpdateResponse {
+            id = project.id
+            name = project.name
+        }
+    }
+
+    override suspend fun delete(request: Client.ProjectDeleteRequest): Client.DeleteResponse {
+        val updateUserId = sessionManager.getLoginUser().id
+        getWritableProject(updateUserId, request.id)
+
+        projectRepository.deleteById(request.id)
+        return DeleteResponse {
+            message = "Project ${request.id}を削除しました。"
+        }
+    }
+
+
+    private fun getWritableProjects(userId: String): List<ProjectEntity> =
+        userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
+            projectRepository.findAllById(ids)
+        }?.toList() ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+
+    private fun getWritableProject(userId: String, projectId: String): ProjectEntity {
+        val project = userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
+            projectRepository.findAllById(ids)
+        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+
+        return project.firstOrNull {
+            it.id == projectId && (userId in it.writer)
+        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+    }
+
+    private fun createGroupResponse(project: ProjectEntity): List<Client.ProjectGroup> {
+        val allToDo = project.contents.groupBy(ProjectEntity.ToDo::groupId).mapValues { todos ->
+            todos.value.map { todo ->
+                ToDo {
+                    id = todo.id
+                    title = todo.title
+                    content = todo.content
+                }
+            }
+        }
+        return project.group.map { group ->
+            ProjectGroup {
+                groupId = group.id
+                name = group.name
+                addAllTodos(allToDo.getOrDefault(groupId, listOf()))
+            }
+        }
+    }
+
+}
