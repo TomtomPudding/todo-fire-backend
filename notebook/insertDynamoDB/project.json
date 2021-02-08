@@ -1,0 +1,146 @@
+[
+  {
+    "id": "99999999999",
+    "name": "test_project1",
+    "type": "\"PRIVATE\"",
+    "color": "\"BLACK\"",
+    "status": "\"OPEN\"",
+    "group": [
+      {
+        "id": "000000001",
+        "name": "タスクリスト",
+        "position": 1
+      },
+      {
+        "id": "000000002",
+        "name": "作業中",
+        "position": 2
+      },
+      {
+        "id": "000000003",
+        "name": "作成ずみ",
+        "position": 3
+      }
+    ],
+    "contents": [
+      {
+        "id": "100000001",
+        "title": "タスクリスト１",
+        "content": "タスク詳細",
+        "group_id": "000000001",
+        "created_user_id": "90000001",
+        "updated_user_id": "90000001",
+        "created_at": "2021-01-04T00:01:02.000Z",
+        "updated_at": "2021-01-04T00:01:02.000Z"
+      },
+      {
+        "id": "100000002",
+        "title": "タスクリスト2",
+        "content": "タスク詳細",
+        "group_id": "000000001",
+        "created_user_id": "90000001",
+        "updated_user_id": "90000001",
+        "created_at": "2021-01-04T00:01:02.000Z",
+        "updated_at": "2021-01-04T00:01:02.000Z"
+      },
+      {
+        "id": "100000003",
+        "title": "作業中1",
+        "content": "タスク詳細",
+        "group_id": "000000002",
+        "created_user_id": "90000001",
+        "updated_user_id": "90000001",
+        "created_at": "2021-01-04T00:01:02.000Z",
+        "updated_at": "2021-01-04T00:01:02.000Z"
+      },
+      {
+        "id": "100000004",
+        "title": "作業中2",
+        "content": "タスク詳細",
+        "group_id": "000000002",
+        "created_user_id": "90000001",
+        "updated_user_id": "90000001",
+        "created_at": "2021-01-04T00:01:02.000Z",
+        "updated_at": "2021-01-04T00:01:02.000Z"
+      }
+    ],
+    "writer": [
+      "90000001"
+    ],
+    "viewer": [
+      "90000002"
+    ]
+  },
+  {
+    "id": "99999999998",
+    "name": "test_project2",
+    "type": "\"PRIVATE\"",
+    "color": "\"BLACK\"",
+    "status": "\"OPEN\"",
+    "group": [
+      {
+        "id": "000000001",
+        "name": "タスクリスト",
+        "position": 1
+      },
+      {
+        "id": "000000002",
+        "name": "作業中",
+        "position": 2
+      },
+      {
+        "id": "000000003",
+        "name": "作成ずみ",
+        "position": 3
+      }
+    ],
+    "contents": [
+      {
+        "id": "100000001",
+        "title": "タスクリスト１",
+        "content": "タスク詳細",
+        "group_id": "000000001",
+        "created_user_id": "90000001",
+        "updated_user_id": "90000001",
+        "created_at": "2021-01-04T00:01:02.000Z",
+        "updated_at": "2021-01-04T00:01:02.000Z"
+      },
+      {
+        "id": "100000002",
+        "title": "タスクリスト2",
+        "content": "タスク詳細",
+        "group_id": "000000001",
+        "created_user_id": "90000001",
+        "updated_user_id": "90000001",
+        "created_at": "2021-01-04T00:01:02.000Z",
+        "updated_at": "2021-01-04T00:01:02.000Z"
+      },
+      {
+        "id": "100000003",
+        "title": "作業中1",
+        "content": "タスク詳細",
+        "group_id": "000000002",
+        "created_user_id": "90000001",
+        "updated_user_id": "90000001",
+        "created_at": "2021-01-04T00:01:02.000Z",
+        "updated_at": "2021-01-04T00:01:02.000Z"
+      },
+      {
+        "id": "100000004",
+        "title": "作業中2",
+        "content": "タスク詳細",
+        "group_id": "000000002",
+        "created_user_id": "90000001",
+        "updated_user_id": "90000001",
+        "created_at": "2021-01-04T00:01:02.000Z",
+        "updated_at": "2021-01-04T00:01:02.000Z"
+      }
+    ],
+    "writer": [
+      "90000001"
+    ],
+    "viewer": [
+      "90000002"
+    ]
+  }
+]

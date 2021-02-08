@@ -4,5 +4,6 @@
     "name" : "テストユーザー１",
     "email" : "test_user@test.gmail.com",
     "password" : "V8dW482gFigp",
+    "projectIds" : ["99999999999", "99999999998"],
     "token": "test_token"
 }
