@@ -7,7 +7,7 @@ import (
 
     "github.com/pkg/errors"
 
-    pb "grpc-sample/pb/admin"
+    pb "grpc/pb/admin"
 
     "google.golang.org/grpc"
     "google.golang.org/grpc/metadata"

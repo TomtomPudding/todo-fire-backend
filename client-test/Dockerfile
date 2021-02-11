@@ -15,4 +15,7 @@ ENV GO111MODULE on
 RUN go get -u github.com/golang/protobuf/protoc-gen-go
 RUN go mod init grpc-sample
 
-## CMD protoc --proto_path ./proto  --go_out=plugins=grpc:./pb/grpc_firebase_admin  ./proto/firebase-admin.proto
+## mkdir pb/admin
+## mkdir pb/client
+## protoc --proto_path ./proto  --go_out=plugins=grpc:./pb/admin  ./proto/admin.proto
+## protoc --proto_path ./proto  --go_out=plugins=grpc:./pb/client  ./proto/client.proto

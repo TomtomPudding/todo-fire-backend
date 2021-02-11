@@ -1,5 +1,5 @@
 syntax = "proto3";
-package grpc.firebase.admin;
+package grpc.todo.admin;
 option java_package = "com.grpc.api";
 
 //  string ではデフォルト値は空文字列である．
