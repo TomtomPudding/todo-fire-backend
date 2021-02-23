@@ -4,9 +4,9 @@ import com.grpc.api.Client
 import com.grpc.api.DeleteResponse
 import com.grpc.api.GroupServiceCoroutineGrpc
 import com.grpc.api.GroupUpdateResponse
+import com.todo.admin.adapter.interceptor.AuthInterceptor
 import com.todo.admin.app.repository.ProjectRepository
 import com.todo.admin.app.repository.UserRepository
-import com.todo.admin.app.service.session.SessionManager
 import com.todo.admin.domain.entity.ProjectEntity
 import com.todo.admin.domain.expection.GrpcException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,19 +15,18 @@ import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
 
-@GRpcService
+@GRpcService(interceptors = [AuthInterceptor::class])
 @ExperimentalCoroutinesApi
 class GroupGrpcService(
     private val projectRepository: ProjectRepository,
-    private val userRepository: UserRepository,
-    private val sessionManager: SessionManager
+    private val userRepository: UserRepository
 ) : GroupServiceCoroutineGrpc.GroupServiceImplBase() {
 
     val failedSearchProject = "Project 情報がありません"
     val failedSearchGroup = "Group 情報がありません"
 
     override suspend fun update(request: Client.GroupUpdateRequest): Client.GroupUpdateResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val updateUserId = AuthInterceptor.USER_IDENTITY.get()
 
         val targetProject = getWritableProject(updateUserId, request.id).apply {
             val targetGroup = group.map { group ->
@@ -38,7 +37,7 @@ class GroupGrpcService(
                     it.id == request.id
                 } ?: throw GrpcException.runtimeInvalidArgument(failedSearchGroup)
                 val position = if (request.position < size - 1) request.position else size - 1
-                val movedGroup = filter { id != request.id }.toMutableList()
+                val movedGroup = filter { projectId != request.id }.toMutableList()
                 movedGroup.add(position, addGroup)
                 movedGroup.toList()
             }
@@ -55,7 +54,7 @@ class GroupGrpcService(
     }
 
     override suspend fun register(request: Client.GroupRegisterRequest): Client.GroupUpdateResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val updateUserId = AuthInterceptor.USER_IDENTITY.get()
 
         val targetProject = getWritableProject(updateUserId, request.id).apply {
             val targetGroup = group.run {
@@ -80,7 +79,7 @@ class GroupGrpcService(
 
 
     override suspend fun delete(request: Client.GroupDeleteRequest): Client.DeleteResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val updateUserId = AuthInterceptor.USER_IDENTITY.get()
         val targetProject = getWritableProject(updateUserId, request.id).apply {
             this.group = group.filter { it.id != request.id }
         }
@@ -97,7 +96,7 @@ class GroupGrpcService(
         } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
 
         return project.firstOrNull {
-            it.group.contains { it.id == groupId } && (userId in it.writer)
+            it.group.any { group -> group.id == groupId } && (userId in it.writer)
         } ?: throw GrpcException.runtimeInvalidArgument(failedSearchGroup)
     }
 }

@@ -15,11 +15,11 @@ import java.util.*
  */
 @DynamoDBTable(tableName = "Token")
 data class TokenEntity(
-    @get: DynamoDBHashKey(attributeName = "group_id")
+    @get: DynamoDBHashKey(attributeName = "user_id")
     @get: DynamoDBIndexRangeKey(
         globalSecondaryIndexNames = ["idx_token"]
     )
-    var groupId: String? = null,
+    var userId: String? = null,
 
     @get: DynamoDBIndexHashKey(
         attributeName = "token",

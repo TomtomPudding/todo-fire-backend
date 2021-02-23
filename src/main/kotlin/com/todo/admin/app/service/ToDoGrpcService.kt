@@ -4,33 +4,32 @@ import com.grpc.api.Client
 import com.grpc.api.DeleteResponse
 import com.grpc.api.ToDoServiceCoroutineGrpc
 import com.grpc.api.ToDoUpdateResponse
+import com.todo.admin.adapter.interceptor.AuthInterceptor
 import com.todo.admin.app.repository.ProjectRepository
 import com.todo.admin.app.repository.UserRepository
-import com.todo.admin.app.service.session.SessionManager
 import com.todo.admin.domain.entity.ProjectEntity
 import com.todo.admin.domain.expection.GrpcException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.lognet.springboot.grpc.GRpcService
 import org.springframework.data.repository.findByIdOrNull
 
-@GRpcService
+@GRpcService(interceptors = [AuthInterceptor::class])
 @ExperimentalCoroutinesApi
 class ToDoGrpcService(
     private val projectRepository: ProjectRepository,
-    private val userRepository: UserRepository,
-    private val sessionManager: SessionManager
+    private val userRepository: UserRepository
 ) : ToDoServiceCoroutineGrpc.ToDoServiceImplBase() {
 
     val failedSearchProject = "Project 情報がありません"
     val failedSearchToDo = "ToDo 情報がありません"
 
     override suspend fun update(request: Client.ToDoUpdateRequest): Client.ToDoUpdateResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val userId = AuthInterceptor.USER_IDENTITY.get()
 
-        val targetProject = getWritableProject(updateUserId, request.id).apply {
+        val targetProject = getWritableProject(userId, request.id).apply {
             val contents = this.contents.map { todo ->
                 if (request.id != todo.id) return@map todo
-                todo.of(request, updateUserId)
+                todo.of(request, userId)
             }
             if (contents == this.contents) throw GrpcException.runtimeInvalidArgument(failedSearchToDo)
             this.contents = contents
@@ -47,10 +46,10 @@ class ToDoGrpcService(
 
 
     override suspend fun register(request: Client.ToDoUpdateRequest): Client.ToDoUpdateResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val userId = AuthInterceptor.USER_IDENTITY.get()
 
-        val targetProject = getWritableProject(updateUserId, request.id).apply {
-            val addContent = ProjectEntity.ToDo.create(request, updateUserId)
+        val targetProject = getWritableProject(userId, request.id).apply {
+            val addContent = ProjectEntity.ToDo.create(request, userId)
             this.contents = contents.plus(addContent)
         }
 
@@ -64,9 +63,9 @@ class ToDoGrpcService(
     }
 
     override suspend fun delete(request: Client.ToDoDeleteRequest): Client.DeleteResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val userId = AuthInterceptor.USER_IDENTITY.get()
 
-        val targetProject = getWritableProject(updateUserId, request.id).apply {
+        val targetProject = getWritableProject(userId, request.id).apply {
             val contents = this.contents.filter { todo -> request.id != todo.id }
             if (this.contents == contents) throw GrpcException.runtimeInvalidArgument(failedSearchToDo)
             this.contents = contents
