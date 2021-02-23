@@ -1,6 +1,6 @@
 [
   {
-    "id": "99999999999",
+    "project_id": "99999999999",
     "name": "test_project1",
     "type": "\"PRIVATE\"",
     "color": "\"BLACK\"",
@@ -72,7 +72,7 @@
     ]
   },
   {
-    "id": "99999999998",
+    "project_id": "99999999998",
     "name": "test_project2",
     "type": "\"PRIVATE\"",
     "color": "\"BLACK\"",
