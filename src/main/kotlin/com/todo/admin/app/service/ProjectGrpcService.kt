@@ -55,7 +55,7 @@ class ProjectGrpcService(
             } catch (e: StatusRuntimeException) {
                 cancel(CancellationException(e.message, e))
             }
-            delay(50_00)
+            delay(30_00)
         }
     }
 
@@ -83,7 +83,7 @@ class ProjectGrpcService(
             } catch (e: StatusRuntimeException) {
                 cancel(CancellationException(e.message, e))
             }
-            delay(50_00)
+            delay(30_00)
         }
     }
 
@@ -133,6 +133,12 @@ class ProjectGrpcService(
             createdUserId = userId
         )
         projectRepository.save(project)
+
+        // ユーザ更新 所属プロジェクト追加
+        val user = userRepository.findByIdOrNull(userId)?.apply {
+            projectIds = projectIds.plus(project.projectId)
+        }
+        user?.run { userRepository.save(this) }
         return ProjectUpdateResponse {
             id = project.projectId
             name = project.name
