@@ -66,11 +66,7 @@ class ProjectGrpcService(
         while (isActive) {
             try {
                 tokenRepository.findByIdOrNull(userId) ?: cancel()
-                val allTitle = getWritableProjects(userId).filter { property ->
-                    property.type.equalsType(request.type) &&
-                            property.status.equalsStatus(request.status) &&
-                            property.color.equalsColor(request.color)
-                }.map { property ->
+                val allTitle = getWritableProjects(userId).filterSearchAll(request).map { property ->
                     ProjectAllTitle {
                         id = property.projectId
                         name = property.name
@@ -154,6 +150,17 @@ class ProjectGrpcService(
             message = "Project ${request.id}を削除しました。"
         }
     }
+
+    private fun List<ProjectEntity>.filterSearchAll(request: Client.ProjectSearchAllRequest) =
+        filter { property ->
+            (request.type == Client.ProjectType.UNKNOWN_TYPE ||
+                    property.type.equalsType(request.type))
+        }.filter { property ->
+            (request.color == com.grpc.api.Client.Color.UNKNOWN_COLOR ||
+                    property.status.equalsStatus(request.status))
+        }.filter { property ->
+            property.color.equalsColor(request.color)
+        }
 
 
     private fun getWritableProjects(userId: String): List<ProjectEntity> =
