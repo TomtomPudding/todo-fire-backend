@@ -14,6 +14,7 @@ import com.todo.admin.app.repository.UserRepository
 import com.todo.admin.domain.entity.ProjectEntity
 import com.todo.admin.domain.expection.GrpcException
 import io.grpc.StatusRuntimeException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.cancel
@@ -52,9 +53,9 @@ class ProjectGrpcService(
                     type = project.type.getType()
                 }
             } catch (e: StatusRuntimeException) {
-                cancel()
+                cancel(CancellationException(e.message, e))
             }
-            delay(10_00)
+            delay(50_00)
         }
     }
 
@@ -80,9 +81,9 @@ class ProjectGrpcService(
                     addAllProjects(allTitle)
                 }
             } catch (e: StatusRuntimeException) {
-                cancel()
+                cancel(CancellationException(e.message, e))
             }
-            delay(10_00)
+            delay(50_00)
         }
     }
 
