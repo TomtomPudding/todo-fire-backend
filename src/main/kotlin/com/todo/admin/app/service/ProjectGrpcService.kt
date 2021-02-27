@@ -124,9 +124,13 @@ class ProjectGrpcService(
     }
 
     override suspend fun register(request: Client.ProjectRegisterRequest): Client.ProjectUpdateResponse {
+        val userId = AuthInterceptor.USER_IDENTITY.get()
+
         val project = ProjectEntity(
             projectId = UUID.randomUUID().toString(),
-            name = request.name
+            name = request.name,
+            writer = listOf(userId),
+            createdUserId = userId
         )
         projectRepository.save(project)
         return ProjectUpdateResponse {
@@ -136,8 +140,8 @@ class ProjectGrpcService(
     }
 
     override suspend fun delete(request: Client.ProjectDeleteRequest): Client.DeleteResponse {
-        val updateUserId = AuthInterceptor.USER_IDENTITY.get()
-        getWritableProject(updateUserId, request.id)
+        val userId = AuthInterceptor.USER_IDENTITY.get()
+        getWritableProject(userId, request.id)
 
         projectRepository.deleteById(request.id)
         return DeleteResponse {
