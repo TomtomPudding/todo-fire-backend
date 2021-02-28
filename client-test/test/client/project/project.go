@@ -58,7 +58,7 @@ func requestUpdate(client pb.ProjectServiceClient, id string) error {
 
     log.Printf("start project update")
     if err != nil {
-        return errors.Wrap(err, "failed project register")
+        return errors.Wrap(err, "failed project update")
     }
     log.Printf("サーバからの受け取り\nid: %s\nname %s\n", reply.GetId(), reply.GetName())
     return nil
@@ -80,7 +80,7 @@ func requestDelete(client pb.ProjectServiceClient, id string) error {
 
     log.Printf("start project delete")
     if err != nil {
-        return errors.Wrap(err, "failed project register")
+        return errors.Wrap(err, "failed project delete")
     }
     return nil
 }
