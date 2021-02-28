@@ -110,30 +110,30 @@ message ToDo {
 
 // group
 message GroupUpdateRequest {
-  string id = 1;
-  string name = 2;
-  string content = 3;
-  int32 position = 4;
-  Color color = 5;
+  string projectId = 1;
+  string groupId = 2;
+  string name = 3;
+  string content = 4;
+  int32 position = 5;
 }
 
 message GroupRegisterRequest {
-  string id = 1;
+  string projectId = 1;
   string name = 2;
   string content = 3;
   int32 position = 4;
-  Color color = 5;
 }
 
 message GroupDeleteRequest {
-  string id = 1;
+  string projectId = 1;
+  string groupId = 2;
 }
 
 message GroupUpdateResponse {
-  string id = 1;
-  string name = 2;
-  string content = 3;
-  Color color = 4;
+  string projectId = 1;
+  string groupId = 2;
+  string name = 3;
+  string content = 4;
 }
 
 message DeleteResponse {
