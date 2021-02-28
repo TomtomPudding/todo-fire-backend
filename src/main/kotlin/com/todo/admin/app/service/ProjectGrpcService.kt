@@ -36,7 +36,8 @@ class ProjectGrpcService(
     private val tokenRepository: TokenRepository
 ) : ProjectServiceCoroutineGrpc.ProjectServiceImplBase() {
 
-    val failedSearchProject = "Project 情報がありません"
+    private val failedSearchProject = "Project 情報がありません"
+    private val failedSearchUser = "User 情報がありません"
 
     private fun searchChanel(
         userId: String,
@@ -133,8 +134,8 @@ class ProjectGrpcService(
         // ユーザ更新 所属プロジェクト追加
         val user = userRepository.findByIdOrNull(userId)?.apply {
             projectIds = projectIds.plus(project.projectId)
-        }
-        user?.run { userRepository.save(this) }
+        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchUser)
+        user.run { userRepository.save(this) }
         return ProjectUpdateResponse {
             id = project.projectId
             name = project.name
@@ -146,6 +147,11 @@ class ProjectGrpcService(
         getWritableProject(userId, request.id)
 
         projectRepository.deleteById(request.id)
+
+        val user = userRepository.findByIdOrNull(userId)?.apply {
+            projectIds = projectIds.filter { it == request.id }
+        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchUser)
+        user.run { userRepository.save(this) }
         return DeleteResponse {
             message = "Project ${request.id}を削除しました。"
         }
