@@ -15,5 +15,5 @@ enum class ProjectType {
 
 
     fun equalsType(type: Client.ProjectType) =
-        (type != Client.ProjectType.UNKNOWN_TYPE) || type.name == this.name
+        type.name == this.name
 }

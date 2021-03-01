@@ -1,6 +1,6 @@
 [
   {
-    "id": "99999999999",
+    "project_id": "99999999999",
     "name": "test_project1",
     "type": "\"PRIVATE\"",
     "color": "\"BLACK\"",
@@ -64,6 +64,7 @@
         "updated_at": "2021-01-04T00:01:02.000Z"
       }
     ],
+    "created_user_id": "90000001",
     "writer": [
       "90000001"
     ],
@@ -72,7 +73,7 @@
     ]
   },
   {
-    "id": "99999999998",
+    "project_id": "99999999998",
     "name": "test_project2",
     "type": "\"PRIVATE\"",
     "color": "\"BLACK\"",
@@ -136,6 +137,7 @@
         "updated_at": "2021-01-04T00:01:02.000Z"
       }
     ],
+    "created_user_id": "90000001",
     "writer": [
       "90000001"
     ],

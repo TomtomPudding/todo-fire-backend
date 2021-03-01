@@ -4,87 +4,98 @@ import com.grpc.api.Client
 import com.grpc.api.DeleteResponse
 import com.grpc.api.ToDoServiceCoroutineGrpc
 import com.grpc.api.ToDoUpdateResponse
+import com.todo.admin.adapter.interceptor.AuthInterceptor
 import com.todo.admin.app.repository.ProjectRepository
 import com.todo.admin.app.repository.UserRepository
-import com.todo.admin.app.service.session.SessionManager
 import com.todo.admin.domain.entity.ProjectEntity
 import com.todo.admin.domain.expection.GrpcException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.lognet.springboot.grpc.GRpcService
 import org.springframework.data.repository.findByIdOrNull
+import java.util.*
 
-@GRpcService
+@GRpcService(interceptors = [AuthInterceptor::class])
 @ExperimentalCoroutinesApi
 class ToDoGrpcService(
     private val projectRepository: ProjectRepository,
-    private val userRepository: UserRepository,
-    private val sessionManager: SessionManager
+    private val userRepository: UserRepository
 ) : ToDoServiceCoroutineGrpc.ToDoServiceImplBase() {
 
-    val failedSearchProject = "Project 情報がありません"
-    val failedSearchToDo = "ToDo 情報がありません"
-
     override suspend fun update(request: Client.ToDoUpdateRequest): Client.ToDoUpdateResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val userId = AuthInterceptor.USER_IDENTITY.get()
 
-        val targetProject = getWritableProject(updateUserId, request.id).apply {
+        val targetProject = getWritableProject(userId, request.projectId, request.todoId).apply {
             val contents = this.contents.map { todo ->
-                if (request.id != todo.id) return@map todo
-                todo.of(request, updateUserId)
+                if (request.todoId != todo.id) return@map todo
+                todo.of(request, userId)
             }
-            if (contents == this.contents) throw GrpcException.runtimeInvalidArgument(failedSearchToDo)
+            if (contents == this.contents) throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_TODO)
             this.contents = contents
         }
 
-        val savedProject = projectRepository.save(targetProject).contents.first { it.id == request.id }
+        val savedProject = projectRepository.save(targetProject).contents.first { it.id == request.todoId }
         return ToDoUpdateResponse {
-            id = savedProject.id
+            projectId = targetProject.projectId
+            groupId = savedProject.groupId
+            todoId = savedProject.id
             title = savedProject.title
             content = savedProject.content
-            groupId = savedProject.groupId
         }
     }
 
 
-    override suspend fun register(request: Client.ToDoUpdateRequest): Client.ToDoUpdateResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+    override suspend fun register(request: Client.ToDoRegisterRequest): Client.ToDoUpdateResponse {
+        val userId = AuthInterceptor.USER_IDENTITY.get()
+        val newTodoId = UUID.randomUUID().toString()
 
-        val targetProject = getWritableProject(updateUserId, request.id).apply {
-            val addContent = ProjectEntity.ToDo.create(request, updateUserId)
+        val targetProject = getWritableProject(userId, request.projectId).apply {
+            val addContent = ProjectEntity.ToDo.create(newTodoId, request, userId)
             this.contents = contents.plus(addContent)
         }
 
-        val savedProject = projectRepository.save(targetProject).contents.first { it.id == request.id }
+        val savedProject = projectRepository.save(targetProject).contents.first { it.id == newTodoId }
         return ToDoUpdateResponse {
-            id = savedProject.id
+            projectId = targetProject.projectId
+            groupId = savedProject.groupId
+            todoId = savedProject.id
             title = savedProject.title
             content = savedProject.content
-            groupId = savedProject.groupId
         }
     }
 
     override suspend fun delete(request: Client.ToDoDeleteRequest): Client.DeleteResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val userId = AuthInterceptor.USER_IDENTITY.get()
 
-        val targetProject = getWritableProject(updateUserId, request.id).apply {
-            val contents = this.contents.filter { todo -> request.id != todo.id }
-            if (this.contents == contents) throw GrpcException.runtimeInvalidArgument(failedSearchToDo)
+        val targetProject = getWritableProject(userId, request.projectId, request.todoId).apply {
+            val contents = this.contents.filter { todo -> request.todoId != todo.id }
+            if (this.contents == contents) throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_TODO)
             this.contents = contents
         }
 
-        val savedProject = projectRepository.save(targetProject).contents.first { it.id == request.id }
+        projectRepository.save(targetProject)
         return DeleteResponse {
-            message = "ToDo ${savedProject.id}を削除しました。"
+            message = "ToDo ${request.todoId}を削除しました。"
         }
     }
 
-    private fun getWritableProject(userId: String, todoId: String): ProjectEntity {
-        val project = userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
-            projectRepository.findAllById(ids)
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+    private fun getWritableProject(userId: String, projectId: String): ProjectEntity {
+        return userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
+            val id = ids.firstOrNull { it == projectId } ?: return@let null
+            val project = projectRepository.findByIdOrNull(id) ?: return@let null
+            if (userId in project.writer) return@let project else null
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
+    }
 
-        return project.firstOrNull {
-            (todoId in it.contents.map(ProjectEntity.ToDo::id)) && (userId in it.writer)
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchToDo)
+    private fun getWritableProject(userId: String, projectId: String, todoId: String): ProjectEntity {
+        return getWritableProject(userId, projectId).let { project ->
+            if (todoId in project.contents.map { it.id } && userId in project.writer) {
+                project
+            } else null
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_TODO)
+    }
+
+    companion object {
+        private const val FAILED_SEARCH_PROJECT = "Project 情報がありません"
+        private const val FAILED_SEARCH_TODO = "ToDo 情報がありません"
     }
 }

@@ -5,6 +5,7 @@ server:
   tomcat:
     max-threads: 200
 
+
 spring:
   devtools:
     livereload:
@@ -16,8 +17,3 @@ spring:
         gsiProjectionType: ALL
         readCapacity: 1
         writeCapacity: 1
-  session:
-    store-type: redis
-  redis:
-    host: localhost
-    port: 6379

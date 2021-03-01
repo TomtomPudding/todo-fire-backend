@@ -18,5 +18,5 @@ enum class ProjectColor {
     BLACK;
 
     fun equalsColor(color: Client.Color) =
-        (color != Client.Color.UNKNOWN_COLOR) || color.name == this.name
+        color.name == this.name
 }

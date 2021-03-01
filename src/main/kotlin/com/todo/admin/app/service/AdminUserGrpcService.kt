@@ -3,10 +3,11 @@ package com.todo.admin.app.service
 import com.grpc.api.Admin
 import com.grpc.api.UserResponse
 import com.grpc.api.UserServiceCoroutineGrpc
+import com.todo.admin.adapter.interceptor.AuthInterceptor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.lognet.springboot.grpc.GRpcService
 
-@GRpcService
+@GRpcService(interceptors = [AuthInterceptor::class])
 @ExperimentalCoroutinesApi
 class AdminUserGrpcService : UserServiceCoroutineGrpc.UserServiceImplBase() {
 

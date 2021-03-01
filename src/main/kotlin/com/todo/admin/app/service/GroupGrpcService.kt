@@ -4,9 +4,9 @@ import com.grpc.api.Client
 import com.grpc.api.DeleteResponse
 import com.grpc.api.GroupServiceCoroutineGrpc
 import com.grpc.api.GroupUpdateResponse
+import com.todo.admin.adapter.interceptor.AuthInterceptor
 import com.todo.admin.app.repository.ProjectRepository
 import com.todo.admin.app.repository.UserRepository
-import com.todo.admin.app.service.session.SessionManager
 import com.todo.admin.domain.entity.ProjectEntity
 import com.todo.admin.domain.expection.GrpcException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,53 +14,48 @@ import org.lognet.springboot.grpc.GRpcService
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
-
-@GRpcService
+@GRpcService(interceptors = [AuthInterceptor::class])
 @ExperimentalCoroutinesApi
 class GroupGrpcService(
     private val projectRepository: ProjectRepository,
-    private val userRepository: UserRepository,
-    private val sessionManager: SessionManager
+    private val userRepository: UserRepository
 ) : GroupServiceCoroutineGrpc.GroupServiceImplBase() {
 
-    val failedSearchProject = "Project 情報がありません"
-    val failedSearchGroup = "Group 情報がありません"
-
     override suspend fun update(request: Client.GroupUpdateRequest): Client.GroupUpdateResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val updateUserId = AuthInterceptor.USER_IDENTITY.get()
 
-        val targetProject = getWritableProject(updateUserId, request.id).apply {
+        val targetProject = getWritableProject(updateUserId, request.projectId, request.groupId).apply {
             val targetGroup = group.map { group ->
-                if (group.id != request.id) return@map group
+                if (group.id != request.groupId) return@map group
                 group.copy(name = request.name, content = request.content)
             }.run {
                 val addGroup = firstOrNull {
-                    it.id == request.id
-                } ?: throw GrpcException.runtimeInvalidArgument(failedSearchGroup)
+                    it.id == request.groupId
+                } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_GROUP)
                 val position = if (request.position < size - 1) request.position else size - 1
-                val movedGroup = filter { id != request.id }.toMutableList()
+                val movedGroup = filter { it.id != request.groupId }.toMutableList()
                 movedGroup.add(position, addGroup)
                 movedGroup.toList()
             }
             this.group = targetGroup
         }
 
-        val savedProject = projectRepository.save(targetProject).group.first { it.id == request.id }
+        val savedProject = projectRepository.save(targetProject).group.first { it.id == request.groupId }
         return GroupUpdateResponse {
-            id = savedProject.id
+            projectId = request.projectId
+            groupId = savedProject.id
             name = savedProject.name
             content = savedProject.content
-            color = Client.Color.BLACK // とりあえず
         }
     }
 
     override suspend fun register(request: Client.GroupRegisterRequest): Client.GroupUpdateResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val updateUserId = AuthInterceptor.USER_IDENTITY.get()
+        val newGroupId = UUID.randomUUID().toString()
 
-        val targetProject = getWritableProject(updateUserId, request.id).apply {
+        val targetProject = getWritableProject(updateUserId, request.projectId).apply {
             val targetGroup = group.run {
-                val groupId = UUID.randomUUID().toString()
-                val addGroup = ProjectEntity.Group(id = groupId, name = request.name, content = request.content)
+                val addGroup = ProjectEntity.Group(id = newGroupId, name = request.name, content = request.content)
                 val position = if (request.position < size - 1) request.position else size - 1
                 val movedGroup = toMutableList()
                 movedGroup.add(position, addGroup)
@@ -69,35 +64,47 @@ class GroupGrpcService(
             this.group = targetGroup
         }
 
-        val savedProject = projectRepository.save(targetProject).group.first { it.id == request.id }
+        val savedProject = projectRepository.save(targetProject).group.first { it.id == newGroupId }
         return GroupUpdateResponse {
-            id = savedProject.id
+            projectId = request.projectId
+            groupId = savedProject.id
             name = savedProject.name
             content = savedProject.content
-            color = Client.Color.BLACK // とりあえず
         }
     }
 
 
     override suspend fun delete(request: Client.GroupDeleteRequest): Client.DeleteResponse {
-        val updateUserId = sessionManager.getLoginUser().id
-        val targetProject = getWritableProject(updateUserId, request.id).apply {
-            this.group = group.filter { it.id != request.id }
+        val updateUserId = AuthInterceptor.USER_IDENTITY.get()
+        val targetProject = getWritableProject(updateUserId, request.projectId, request.groupId).apply {
+            this.group = group.filter { it.id != request.groupId }
+            this.contents = contents.filter { it.groupId != request.groupId }
         }
 
-        val savedProject = projectRepository.save(targetProject).group.first { it.id == request.id }
+        projectRepository.save(targetProject)
         return DeleteResponse {
-            message = "Group ${savedProject.id}を削除しました。"
+            message = "Group ${request.groupId}を削除しました。"
         }
     }
 
-    private fun getWritableProject(userId: String, groupId: String): ProjectEntity {
-        val project = userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
-            projectRepository.findAllById(ids)
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+    private fun getWritableProject(userId: String, projectId: String): ProjectEntity {
+        return userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
+            val id = ids.firstOrNull { it == projectId } ?: return@let null
+            val project = projectRepository.findByIdOrNull(id) ?: return@let null
+            if (userId in project.writer) return@let project else null
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
+    }
 
-        return project.firstOrNull {
-            it.group.contains { it.id == groupId } && (userId in it.writer)
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchGroup)
+    private fun getWritableProject(userId: String, projectId: String, groupId: String): ProjectEntity {
+        return getWritableProject(userId, projectId).let { project ->
+            if (project.group.any { group -> group.id == groupId } && (userId in project.writer)) {
+                return@let project
+            } else null
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
+    }
+
+    companion object {
+        private const val FAILED_SEARCH_PROJECT = "Project 情報がありません"
+        private const val FAILED_SEARCH_GROUP = "Group 情報がありません"
     }
 }

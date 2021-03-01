@@ -7,12 +7,14 @@ import com.grpc.api.ProjectGroup
 import com.grpc.api.ProjectServiceCoroutineGrpc
 import com.grpc.api.ProjectUpdateResponse
 import com.grpc.api.ToDo
+import com.todo.admin.adapter.interceptor.AuthInterceptor
 import com.todo.admin.app.repository.ProjectRepository
+import com.todo.admin.app.repository.TokenRepository
 import com.todo.admin.app.repository.UserRepository
-import com.todo.admin.app.service.session.SessionManager
 import com.todo.admin.domain.entity.ProjectEntity
 import com.todo.admin.domain.expection.GrpcException
 import io.grpc.StatusRuntimeException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.cancel
@@ -25,50 +27,68 @@ import org.lognet.springboot.grpc.GRpcService
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
-
-@GRpcService
+@GRpcService(interceptors = [AuthInterceptor::class])
 @ExperimentalCoroutinesApi
 class ProjectGrpcService(
     private val projectRepository: ProjectRepository,
     private val userRepository: UserRepository,
-    private val sessionManager: SessionManager
+    private val tokenRepository: TokenRepository
 ) : ProjectServiceCoroutineGrpc.ProjectServiceImplBase() {
 
-    val failedSearchProject = "Project 情報がありません"
+    override suspend fun search(
+        request: Client.ProjectSearchRequest,
+        responseChannel: SendChannel<Client.ProjectSearchResponse>
+    ) {
+        val userId = AuthInterceptor.USER_IDENTITY.get()
+        val searchChannel = searchChanel(userId, request).openSubscription()
+        searchChannel.consumeEach {
+            responseChannel.send(it)
+        }
+    }
+
 
     private fun searchChanel(
+        userId: String,
         request: Client.ProjectSearchRequest
     ) = GlobalScope.broadcast<Client.ProjectSearchResponse> {
         while (isActive) {
             try {
-                val updateUserId = sessionManager.getLoginUser().id
-                val project = getWritableProject(updateUserId, request.id)
+                tokenRepository.findByIdOrNull(userId) ?: cancel()
+                val project = getWritableProject(userId, request.id)
                 send {
-                    id = project.id
+                    id = project.projectId
                     name = project.name
                     addAllGroups(createGroupResponse(project))
                     type = project.type.getType()
                 }
             } catch (e: StatusRuntimeException) {
-                cancel()
+                cancel(CancellationException(e.message, e))
             }
-            delay(10_00)
+            delay(SEARCH_DELAY)
+        }
+    }
+
+    override suspend fun searchAll(
+        request: Client.ProjectSearchAllRequest,
+        responseChannel: SendChannel<Client.ProjectSearchAllResponse>
+    ) {
+        val userId = AuthInterceptor.USER_IDENTITY.get()
+        val searchChannel = searchAllChanel(userId, request).openSubscription()
+        searchChannel.consumeEach {
+            responseChannel.send(it)
         }
     }
 
     private fun searchAllChanel(
+        userId: String,
         request: Client.ProjectSearchAllRequest
     ) = GlobalScope.broadcast<Client.ProjectSearchAllResponse> {
         while (isActive) {
             try {
-                val updateUserId = sessionManager.getLoginUser().id
-                val allTitle = getWritableProjects(updateUserId).filter { property ->
-                    property.type.equalsType(request.type) &&
-                            property.status.equalsStatus(request.status) &&
-                            property.color.equalsColor(request.color)
-                }.map { property ->
+                tokenRepository.findByIdOrNull(userId) ?: cancel()
+                val allTitle = getWritableProjects(userId).filterSearchAll(request).map { property ->
                     ProjectAllTitle {
-                        id = property.id
+                        id = property.projectId
                         name = property.name
                         type = property.type.getType()
                     }
@@ -77,82 +97,87 @@ class ProjectGrpcService(
                     addAllProjects(allTitle)
                 }
             } catch (e: StatusRuntimeException) {
-                cancel()
+                cancel(CancellationException(e.message, e))
             }
-            delay(10_00)
+            delay(SEARCH_DELAY)
         }
     }
-
-    override suspend fun search(
-        request: Client.ProjectSearchRequest,
-        responseChannel: SendChannel<Client.ProjectSearchResponse>
-    ) {
-        val searchChannel = searchChanel(request).openSubscription()
-        searchChannel.consumeEach {
-            responseChannel.send(it)
-        }
-    }
-
-    override suspend fun searchAll(
-        request: Client.ProjectSearchAllRequest,
-        responseChannel: SendChannel<Client.ProjectSearchAllResponse>
-    ) {
-        val searchChannel = searchAllChanel(request).openSubscription()
-        searchChannel.consumeEach {
-            responseChannel.send(it)
-        }
-    }
-
 
     override suspend fun update(request: Client.ProjectUpdateRequest): Client.ProjectUpdateResponse {
-        val updateUserId = sessionManager.getLoginUser().id
+        val userId = AuthInterceptor.USER_IDENTITY.get()
 
-        val project = getWritableProject(updateUserId, request.id).apply {
+        val project = getWritableProject(userId, request.id).apply {
             name = request.name
         }
         projectRepository.save(project)
         return ProjectUpdateResponse {
-            id = project.id
+            id = project.projectId
             name = project.name
         }
     }
 
     override suspend fun register(request: Client.ProjectRegisterRequest): Client.ProjectUpdateResponse {
+        val userId = AuthInterceptor.USER_IDENTITY.get()
+
         val project = ProjectEntity(
-            id = UUID.randomUUID().toString(),
-            name = request.name
+            projectId = UUID.randomUUID().toString(),
+            name = request.name,
+            writer = listOf(userId),
+            createdUserId = userId
         )
         projectRepository.save(project)
+
+        // ユーザ更新 所属プロジェクト追加
+        val user = userRepository.findByIdOrNull(userId)?.apply {
+            projectIds = projectIds.plus(project.projectId)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_USER)
+        user.run { userRepository.save(this) }
         return ProjectUpdateResponse {
-            id = project.id
+            id = project.projectId
             name = project.name
         }
     }
 
     override suspend fun delete(request: Client.ProjectDeleteRequest): Client.DeleteResponse {
-        val updateUserId = sessionManager.getLoginUser().id
-        getWritableProject(updateUserId, request.id)
+        val userId = AuthInterceptor.USER_IDENTITY.get()
+        getWritableProject(userId, request.id)
 
         projectRepository.deleteById(request.id)
+
+        val user = userRepository.findByIdOrNull(userId)?.apply {
+            projectIds = projectIds.filter { it == request.id }
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_USER)
+        user.run { userRepository.save(this) }
         return DeleteResponse {
             message = "Project ${request.id}を削除しました。"
         }
     }
 
+    private fun List<ProjectEntity>.filterSearchAll(request: Client.ProjectSearchAllRequest) =
+        filter { property ->
+            (request.type == Client.ProjectType.UNKNOWN_TYPE ||
+                    property.type.equalsType(request.type))
+        }.filter { property ->
+            (request.color == com.grpc.api.Client.Color.UNKNOWN_COLOR ||
+                    property.status.equalsStatus(request.status))
+        }.filter { property ->
+            property.color.equalsColor(request.color)
+        }
+
 
     private fun getWritableProjects(userId: String): List<ProjectEntity> =
         userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
             projectRepository.findAllById(ids)
-        }?.toList() ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+        }?.toList() ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
 
     private fun getWritableProject(userId: String, projectId: String): ProjectEntity {
         val project = userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
             projectRepository.findAllById(ids)
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
 
         return project.firstOrNull {
-            it.id == projectId && (userId in it.writer)
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+            it.projectId == projectId && (userId in it.writer)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
     }
 
     private fun createGroupResponse(project: ProjectEntity): List<Client.ProjectGroup> {
@@ -174,4 +199,9 @@ class ProjectGrpcService(
         }
     }
 
+    companion object {
+        private const val FAILED_SEARCH_PROJECT = "Project 情報がありません"
+        private const val FAILED_SEARCH_USER = "User 情報がありません"
+        private const val SEARCH_DELAY: Long = 1500L
+    }
 }

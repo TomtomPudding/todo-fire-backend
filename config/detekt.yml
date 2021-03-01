@@ -42,13 +42,17 @@ complexity:
     active: true
   LongMethod:
     active: true
-    threshold: 20
+    threshold: 30
   LongParameterList:
     active: false
     functionThreshold: 5
   LargeClass:
     active: false
     threshold: 70
+  TooManyFunctions:
+    active: true
+    thresholdInClasses: 20
+    thresholdInObjects: 20
 
 exceptions:
   NotImplementedDeclaration:
