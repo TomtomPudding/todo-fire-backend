@@ -35,6 +35,18 @@ class ProjectGrpcService(
     private val tokenRepository: TokenRepository
 ) : ProjectServiceCoroutineGrpc.ProjectServiceImplBase() {
 
+    override suspend fun search(
+        request: Client.ProjectSearchRequest,
+        responseChannel: SendChannel<Client.ProjectSearchResponse>
+    ) {
+        val userId = AuthInterceptor.USER_IDENTITY.get()
+        val searchChannel = searchChanel(userId, request).openSubscription()
+        searchChannel.consumeEach {
+            responseChannel.send(it)
+        }
+    }
+
+
     private fun searchChanel(
         userId: String,
         request: Client.ProjectSearchRequest
@@ -53,6 +65,17 @@ class ProjectGrpcService(
                 cancel(CancellationException(e.message, e))
             }
             delay(SEARCH_DELAY)
+        }
+    }
+
+    override suspend fun searchAll(
+        request: Client.ProjectSearchAllRequest,
+        responseChannel: SendChannel<Client.ProjectSearchAllResponse>
+    ) {
+        val userId = AuthInterceptor.USER_IDENTITY.get()
+        val searchChannel = searchAllChanel(userId, request).openSubscription()
+        searchChannel.consumeEach {
+            responseChannel.send(it)
         }
     }
 
@@ -79,29 +102,6 @@ class ProjectGrpcService(
             delay(SEARCH_DELAY)
         }
     }
-
-    override suspend fun search(
-        request: Client.ProjectSearchRequest,
-        responseChannel: SendChannel<Client.ProjectSearchResponse>
-    ) {
-        val userId = AuthInterceptor.USER_IDENTITY.get()
-        val searchChannel = searchChanel(userId, request).openSubscription()
-        searchChannel.consumeEach {
-            responseChannel.send(it)
-        }
-    }
-
-    override suspend fun searchAll(
-        request: Client.ProjectSearchAllRequest,
-        responseChannel: SendChannel<Client.ProjectSearchAllResponse>
-    ) {
-        val userId = AuthInterceptor.USER_IDENTITY.get()
-        val searchChannel = searchAllChanel(userId, request).openSubscription()
-        searchChannel.consumeEach {
-            responseChannel.send(it)
-        }
-    }
-
 
     override suspend fun update(request: Client.ProjectUpdateRequest): Client.ProjectUpdateResponse {
         val userId = AuthInterceptor.USER_IDENTITY.get()
