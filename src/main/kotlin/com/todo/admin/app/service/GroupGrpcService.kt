@@ -82,9 +82,10 @@ class GroupGrpcService(
         val updateUserId = AuthInterceptor.USER_IDENTITY.get()
         val targetProject = getWritableProject(updateUserId, request.projectId, request.groupId).apply {
             this.group = group.filter { it.id != request.groupId }
+            this.contents = contents.filter { it.groupId != request.groupId }
         }
 
-        val savedProject = projectRepository.save(targetProject)
+        projectRepository.save(targetProject)
         return DeleteResponse {
             message = "Group ${request.groupId}を削除しました。"
         }
@@ -99,9 +100,7 @@ class GroupGrpcService(
     }
 
     private fun getWritableProject(userId: String, projectId: String, groupId: String): ProjectEntity {
-        return userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
-            val id = ids.firstOrNull { it == projectId } ?: return@let null
-            val project = projectRepository.findByIdOrNull(id) ?: return@let null
+        return getWritableProject(userId, projectId).let { project ->
             if (project.group.any { group -> group.id == groupId } && (userId in project.writer)) {
                 return@let project
             } else null

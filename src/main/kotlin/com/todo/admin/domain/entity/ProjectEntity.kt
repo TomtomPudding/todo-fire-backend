@@ -119,11 +119,12 @@ data class ProjectEntity(
 
             @DynamoDBIgnore
             fun create(
-                request: Client.ToDoUpdateRequest,
+                todoId: String,
+                request: Client.ToDoRegisterRequest,
                 updatedUserId: String
             ) =
                 ToDo(
-                    id = request.id,
+                    id = todoId,
                     title = request.title,
                     content = request.content,
                     groupId = request.groupId,
@@ -137,10 +138,10 @@ data class ProjectEntity(
             updatedUserId: String
         ) =
             this.copy(
-                id = request.id,
+                id = request.todoId,
                 title = request.title,
                 content = request.content,
-                groupId = request.groupId,
+                groupId = request.moveGroupId,
                 updatedUserId = updatedUserId
             )
     }

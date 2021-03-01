@@ -20,7 +20,7 @@ service ProjectService {
 
 service ToDoService {
   rpc Update(ToDoUpdateRequest) returns (ToDoUpdateResponse);
-  rpc Register(ToDoUpdateRequest) returns (ToDoUpdateResponse);
+  rpc Register(ToDoRegisterRequest) returns (ToDoUpdateResponse);
   rpc Delete(ToDoDeleteRequest) returns (DeleteResponse);
 }
 
@@ -84,22 +84,32 @@ message ProjectGroup {
 }
 
 // todo
-message ToDoUpdateRequest {
-  string id = 1;
+message ToDoRegisterRequest {
+  string projectId = 1;
   string groupId = 2;
   string title = 3;
   string content = 4;
+}
+
+message ToDoUpdateRequest {
+  string projectId = 1;
+  string todoId = 2;
+  string moveGroupId = 3;
+  string title = 4;
+  string content = 5;
 }
 
 message ToDoDeleteRequest {
-  string id = 1;
+  string projectId = 1;
+  string todoId = 2;
 }
 
 message ToDoUpdateResponse {
-  string id = 1;
+  string projectId = 1;
   string groupId = 2;
-  string title = 3;
-  string content = 4;
+  string todoId = 3;
+  string title = 4;
+  string content = 5;
 }
 
 message ToDo {
