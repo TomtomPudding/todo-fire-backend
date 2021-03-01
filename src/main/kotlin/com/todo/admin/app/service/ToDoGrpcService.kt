@@ -72,9 +72,9 @@ class ToDoGrpcService(
             this.contents = contents
         }
 
-        val savedProject = projectRepository.save(targetProject).contents.first { it.id == request.todoId }
+        projectRepository.save(targetProject)
         return DeleteResponse {
-            message = "ToDo ${savedProject.id}を削除しました。"
+            message = "ToDo ${request.todoId}を削除しました。"
         }
     }
 
