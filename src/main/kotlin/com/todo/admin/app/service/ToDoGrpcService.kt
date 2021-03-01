@@ -21,9 +21,6 @@ class ToDoGrpcService(
     private val userRepository: UserRepository
 ) : ToDoServiceCoroutineGrpc.ToDoServiceImplBase() {
 
-    val failedSearchProject = "Project 情報がありません"
-    val failedSearchToDo = "ToDo 情報がありません"
-
     override suspend fun update(request: Client.ToDoUpdateRequest): Client.ToDoUpdateResponse {
         val userId = AuthInterceptor.USER_IDENTITY.get()
 
@@ -32,7 +29,7 @@ class ToDoGrpcService(
                 if (request.todoId != todo.id) return@map todo
                 todo.of(request, userId)
             }
-            if (contents == this.contents) throw GrpcException.runtimeInvalidArgument(failedSearchToDo)
+            if (contents == this.contents) throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_TODO)
             this.contents = contents
         }
 
@@ -71,7 +68,7 @@ class ToDoGrpcService(
 
         val targetProject = getWritableProject(userId, request.projectId, request.todoId).apply {
             val contents = this.contents.filter { todo -> request.todoId != todo.id }
-            if (this.contents == contents) throw GrpcException.runtimeInvalidArgument(failedSearchToDo)
+            if (this.contents == contents) throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_TODO)
             this.contents = contents
         }
 
@@ -86,7 +83,7 @@ class ToDoGrpcService(
             val id = ids.firstOrNull { it == projectId } ?: return@let null
             val project = projectRepository.findByIdOrNull(id) ?: return@let null
             if (userId in project.writer) return@let project else null
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
     }
 
     private fun getWritableProject(userId: String, projectId: String, todoId: String): ProjectEntity {
@@ -94,6 +91,11 @@ class ToDoGrpcService(
             if (todoId in project.contents.map { it.id } && userId in project.writer) {
                 project
             } else null
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchToDo)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_TODO)
+    }
+
+    companion object {
+        private const val FAILED_SEARCH_PROJECT = "Project 情報がありません"
+        private const val FAILED_SEARCH_TODO = "ToDo 情報がありません"
     }
 }

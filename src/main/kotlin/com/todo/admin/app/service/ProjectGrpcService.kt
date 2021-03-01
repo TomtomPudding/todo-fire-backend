@@ -27,7 +27,6 @@ import org.lognet.springboot.grpc.GRpcService
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
-
 @GRpcService(interceptors = [AuthInterceptor::class])
 @ExperimentalCoroutinesApi
 class ProjectGrpcService(
@@ -35,9 +34,6 @@ class ProjectGrpcService(
     private val userRepository: UserRepository,
     private val tokenRepository: TokenRepository
 ) : ProjectServiceCoroutineGrpc.ProjectServiceImplBase() {
-
-    private val failedSearchProject = "Project 情報がありません"
-    private val failedSearchUser = "User 情報がありません"
 
     private fun searchChanel(
         userId: String,
@@ -56,7 +52,7 @@ class ProjectGrpcService(
             } catch (e: StatusRuntimeException) {
                 cancel(CancellationException(e.message, e))
             }
-            delay(30_00)
+            delay(SEARCH_DELAY)
         }
     }
 
@@ -80,7 +76,7 @@ class ProjectGrpcService(
             } catch (e: StatusRuntimeException) {
                 cancel(CancellationException(e.message, e))
             }
-            delay(30_00)
+            delay(SEARCH_DELAY)
         }
     }
 
@@ -134,7 +130,7 @@ class ProjectGrpcService(
         // ユーザ更新 所属プロジェクト追加
         val user = userRepository.findByIdOrNull(userId)?.apply {
             projectIds = projectIds.plus(project.projectId)
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchUser)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_USER)
         user.run { userRepository.save(this) }
         return ProjectUpdateResponse {
             id = project.projectId
@@ -150,7 +146,7 @@ class ProjectGrpcService(
 
         val user = userRepository.findByIdOrNull(userId)?.apply {
             projectIds = projectIds.filter { it == request.id }
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchUser)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_USER)
         user.run { userRepository.save(this) }
         return DeleteResponse {
             message = "Project ${request.id}を削除しました。"
@@ -172,16 +168,16 @@ class ProjectGrpcService(
     private fun getWritableProjects(userId: String): List<ProjectEntity> =
         userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
             projectRepository.findAllById(ids)
-        }?.toList() ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+        }?.toList() ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
 
     private fun getWritableProject(userId: String, projectId: String): ProjectEntity {
         val project = userRepository.findByIdOrNull(userId)?.projectIds?.let { ids ->
             projectRepository.findAllById(ids)
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
 
         return project.firstOrNull {
             it.projectId == projectId && (userId in it.writer)
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
     }
 
     private fun createGroupResponse(project: ProjectEntity): List<Client.ProjectGroup> {
@@ -203,4 +199,9 @@ class ProjectGrpcService(
         }
     }
 
+    companion object {
+        private const val FAILED_SEARCH_PROJECT = "Project 情報がありません"
+        private const val FAILED_SEARCH_USER = "User 情報がありません"
+        private const val SEARCH_DELAY: Long = 1500L
+    }
 }

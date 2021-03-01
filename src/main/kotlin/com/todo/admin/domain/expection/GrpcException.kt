@@ -4,14 +4,11 @@ import io.grpc.Status
 import io.grpc.StatusRuntimeException
 import org.slf4j.LoggerFactory
 
-class GrpcException {
+object GrpcException {
+    private val log = LoggerFactory.getLogger(GrpcException::class.java)
 
-    companion object {
-        private val log = LoggerFactory.getLogger(GrpcException::class.java)
-
-        fun runtimeInvalidArgument(message: String): StatusRuntimeException {
-            log.info(message)
-            return StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(message))
-        }
+    fun runtimeInvalidArgument(message: String): StatusRuntimeException {
+        log.info(message)
+        return StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(message))
     }
 }

@@ -14,16 +14,12 @@ import org.lognet.springboot.grpc.GRpcService
 import org.springframework.data.repository.findByIdOrNull
 import java.util.*
 
-
 @GRpcService(interceptors = [AuthInterceptor::class])
 @ExperimentalCoroutinesApi
 class GroupGrpcService(
     private val projectRepository: ProjectRepository,
     private val userRepository: UserRepository
 ) : GroupServiceCoroutineGrpc.GroupServiceImplBase() {
-
-    val failedSearchProject = "Project 情報がありません"
-    val failedSearchGroup = "Group 情報がありません"
 
     override suspend fun update(request: Client.GroupUpdateRequest): Client.GroupUpdateResponse {
         val updateUserId = AuthInterceptor.USER_IDENTITY.get()
@@ -35,7 +31,7 @@ class GroupGrpcService(
             }.run {
                 val addGroup = firstOrNull {
                     it.id == request.groupId
-                } ?: throw GrpcException.runtimeInvalidArgument(failedSearchGroup)
+                } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_GROUP)
                 val position = if (request.position < size - 1) request.position else size - 1
                 val movedGroup = filter { it.id != request.groupId }.toMutableList()
                 movedGroup.add(position, addGroup)
@@ -96,7 +92,7 @@ class GroupGrpcService(
             val id = ids.firstOrNull { it == projectId } ?: return@let null
             val project = projectRepository.findByIdOrNull(id) ?: return@let null
             if (userId in project.writer) return@let project else null
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
     }
 
     private fun getWritableProject(userId: String, projectId: String, groupId: String): ProjectEntity {
@@ -104,6 +100,11 @@ class GroupGrpcService(
             if (project.group.any { group -> group.id == groupId } && (userId in project.writer)) {
                 return@let project
             } else null
-        } ?: throw GrpcException.runtimeInvalidArgument(failedSearchProject)
+        } ?: throw GrpcException.runtimeInvalidArgument(FAILED_SEARCH_PROJECT)
+    }
+
+    companion object {
+        private const val FAILED_SEARCH_PROJECT = "Project 情報がありません"
+        private const val FAILED_SEARCH_GROUP = "Group 情報がありません"
     }
 }

@@ -13,18 +13,11 @@ import io.grpc.ServerInterceptor
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
-
 @Order(30)
 @Component
 class AuthInterceptor(
     private val tokenRepository: TokenRepository
 ) : ServerInterceptor {
-
-    companion object {
-        val USER_IDENTITY: Context.Key<String> = Context.key("identity") // "identity" is just for debugging
-    }
-
-    private val bearerSize: Int = 7
 
     override fun <ReqT : Any?, RespT : Any?> interceptCall(
         call: ServerCall<ReqT, RespT>?,
@@ -36,7 +29,7 @@ class AuthInterceptor(
         if (!(authHeader.startsWith("Bearer ") || authHeader.startsWith("bearer "))) {
             handleException(OAuth2Exception("トークンを設定してください"), call!!, headers)
         }
-        val token = authHeader.substring(bearerSize)
+        val token = authHeader.substring(BEARER_SIZE)
         if (token.isEmpty()) {
             handleException(OAuth2Exception("トークンを設定してください"), call!!, headers)
         }
@@ -47,5 +40,10 @@ class AuthInterceptor(
 
         val context = Context.current().withValue(USER_IDENTITY, userId)
         return Contexts.interceptCall<ReqT, RespT>(context, call, headers, next)
+    }
+
+    companion object {
+        val USER_IDENTITY: Context.Key<String> = Context.key("identity") // "identity" is just for debugging
+        private const val BEARER_SIZE: Int = 7
     }
 }

@@ -20,7 +20,6 @@ import com.todo.admin.domain.entity.enum.ProjectStatus
 import com.todo.admin.domain.entity.enum.ProjectType
 import java.util.*
 
-
 /**
  * ToDo テーブル
  */
@@ -115,8 +114,20 @@ data class ProjectEntity(
         @get:DynamoDBTypeConvertedTimestamp(timeZone = "JST")
         @Json(name = "udpated_at") var updatedAt: Date = Date()
     ) {
-        companion object {
+        @DynamoDBIgnore
+        fun of(
+            request: Client.ToDoUpdateRequest,
+            updatedUserId: String
+        ) =
+            this.copy(
+                id = request.todoId,
+                title = request.title,
+                content = request.content,
+                groupId = request.moveGroupId,
+                updatedUserId = updatedUserId
+            )
 
+        companion object {
             @DynamoDBIgnore
             fun create(
                 todoId: String,
@@ -131,18 +142,5 @@ data class ProjectEntity(
                     updatedUserId = updatedUserId
                 )
         }
-
-        @DynamoDBIgnore
-        fun of(
-            request: Client.ToDoUpdateRequest,
-            updatedUserId: String
-        ) =
-            this.copy(
-                id = request.todoId,
-                title = request.title,
-                content = request.content,
-                groupId = request.moveGroupId,
-                updatedUserId = updatedUserId
-            )
     }
 }

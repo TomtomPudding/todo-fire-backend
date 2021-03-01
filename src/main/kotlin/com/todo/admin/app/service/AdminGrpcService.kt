@@ -20,16 +20,13 @@ class AdminGrpcService(
     private val tokenRepository: TokenRepository
 ) : AdminServiceCoroutineGrpc.AdminServiceImplBase() {
 
-    private val invalidUserMessage = "入力が不正です。内容をご確認ください。"
-    private val invalidEmptyUserMessage = "ユーザ名を入力してください"
-
     override suspend fun login(request: Admin.LoginRequest): Admin.LoginResponse {
         if (request.uid.isEmpty()) {
-            throw StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(invalidEmptyUserMessage))
+            throw StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(INVALID_EMPTY_USER_MESSAGE))
         }
         val user = userRepository.findByIdOrNull(request.uid)
         if (user == null || user.password != request.password) {
-            throw StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(invalidUserMessage))
+            throw StatusRuntimeException(Status.INVALID_ARGUMENT.withDescription(INVALID_USER_MESSAGE))
         }
 
         // save token
@@ -44,4 +41,8 @@ class AdminGrpcService(
         }
     }
 
+    companion object {
+        private const val INVALID_USER_MESSAGE = "入力が不正です。内容をご確認ください。"
+        private const val INVALID_EMPTY_USER_MESSAGE = "ユーザ名を入力してください"
+    }
 }
