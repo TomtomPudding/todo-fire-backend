@@ -2,6 +2,7 @@ package com.todo.admin.adapter.interceptor
 
 import com.google.common.base.Strings.nullToEmpty
 import com.todo.admin.adapter.interceptor.HandlerException.Companion.handleException
+import com.todo.admin.adapter.util.DateUtil.beforeNow
 import com.todo.admin.app.repository.TokenRepository
 import com.todo.admin.domain.expection.OAuth2Exception
 import io.grpc.Context
@@ -33,7 +34,12 @@ class AuthInterceptor(
         if (token.isEmpty()) {
             handleException(OAuth2Exception("トークンを設定してください"), call!!, headers)
         }
-        val userId = tokenRepository.findByToken(token)?.userId
+        val tokenEntity = tokenRepository.findByToken(token)
+
+        if (tokenEntity?.expiredAt?.beforeNow() == true) {
+            handleException(OAuth2Exception("トークン期限が切れています"), call!!, headers)
+        }
+        val userId = tokenEntity?.userId
         if (userId == null) {
             handleException(OAuth2Exception("トークンが不正です"), call!!, headers)
         }
