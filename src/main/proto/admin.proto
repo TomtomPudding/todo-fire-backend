@@ -5,6 +5,7 @@ option java_package = "com.grpc.api";
 service AdminService {
   // サーバーからクライアントにレスポンスを送り続ける
   rpc Login(LoginRequest) returns (LoginResponse);
+  rpc LoginGuest(Empty) returns (LoginResponse);
 }
 
 service AdminStatusService {
